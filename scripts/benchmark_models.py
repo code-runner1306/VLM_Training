@@ -67,7 +67,8 @@ async def benchmark_single_model(
     try:
         model = create_vision_model(m_cfg)
     except Exception as e:
-        logger.error(f"SKIPPED: {model_name} initialization failed: {e}")
+        import traceback
+        logger.error(f"SKIPPED: {model_name} initialization failed: {e}\n{traceback.format_exc()}")
         sys.stdout.flush()
         return None
 
