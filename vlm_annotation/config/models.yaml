@@ -1,0 +1,24 @@
+models:
+  - provider: gemini
+    name: gemini-flash-lite-latest
+    model: gemini-flash-lite-latest
+    enabled: true
+    rate_limit:
+      requests_per_minute: 15
+      max_concurrency: 3
+
+  - provider: groq
+    name: groq-qwen3.6-27b
+    model: qwen/qwen3.6-27b
+    enabled: true
+    rate_limit:
+      requests_per_minute: 30
+      max_concurrency: 5
+
+  - provider: nvidia
+    name: nvidia-llama-3.2-11b-vision
+    model: meta/llama-3.2-11b-vision-instruct
+    enabled: true
+    rate_limit:
+      requests_per_minute: 30
+      max_concurrency: 5
