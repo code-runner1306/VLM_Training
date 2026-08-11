@@ -43,7 +43,8 @@ def scan_for_forbidden_files() -> List[str]:
 
         # Check forbidden directories/files
         for forbidden in FORBIDDEN_PATHS:
-            if rel_path.startswith(forbidden) or forbidden in rel_path:
+            norm_rel = rel_path.replace("\\", "/")
+            if norm_rel.startswith(forbidden) or norm_rel.startswith(f"./{forbidden}"):
                 violations.append(f"Forbidden directory/secret path '{forbidden}': {rel_path}")
 
         # Check file size if file exists
