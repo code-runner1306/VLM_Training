@@ -21,6 +21,19 @@ python main.py --annotation-provider huggingface --annotation-model Qwen/Qwen2.5
 
 ---
 
+## 📓 Google Colab 200-Image Benchmarking Notebook
+
+A ready-to-run Google Colab notebook is available at [colab_benchmark.ipynb](file:///c:/Users/Mayank%20Mehta/Projects/PythonProjects/VLM_Training/colab_benchmark.ipynb) (or [notebooks/colab_benchmark.ipynb](file:///c:/Users/Mayank%20Mehta/Projects/PythonProjects/VLM_Training/notebooks/colab_benchmark.ipynb)).
+
+It performs the complete cloud GPU benchmarking workflow:
+1. Clones the `VLM_Training` repository from GitHub.
+2. Unzips uploaded `Cotton_dataset.zip` directly into the Colab environment.
+3. Installs dependencies and runs environment pre-flight verification.
+4. Executes the 200-image benchmark on local Hugging Face models (`Qwen/Qwen2.5-VL-7B-Instruct` and `Qwen/Qwen2.5-VL-3B-Instruct`).
+5. Uses `training/scripts/push_github.py` to push evaluation metrics, plots, and report files back to GitHub.
+
+---
+
 ## Key Features
 
 - **End-to-End Automation (`main.py`)**: Seamless back-to-back execution from raw images to fine-tuned VLM adapters and comparison reports.
