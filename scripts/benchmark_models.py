@@ -111,10 +111,15 @@ async def benchmark_single_model(
                 "{IMAGE_PATH}", item.relative_path
             )
 
+            # Ensure valid image_path on current host platform
+            actual_img_path = item.image_path
+            if not os.path.exists(actual_img_path):
+                actual_img_path = str(Path(args.dataset_dir) / item.relative_path)
+
             try:
                 response = await execute_with_retry(
                     model.generate_annotation,
-                    image_path=item.image_path,
+                    image_path=actual_img_path,
                     disease_name=item.disease_name,
                     prompt=formatted_prompt,
                     disease_profile=disease_profile,
@@ -123,7 +128,7 @@ async def benchmark_single_model(
                 )
 
                 score_res = await evaluator.evaluate_annotation(
-                    image_path=item.image_path,
+                    image_path=actual_img_path,
                     disease_name=item.disease_name,
                     candidate_json=response.parsed_json,
                     raw_response=response.raw_response

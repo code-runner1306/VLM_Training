@@ -1,5 +1,6 @@
 import json
 import math
+import os
 import random
 from pathlib import Path
 from typing import Dict, List
@@ -14,13 +15,22 @@ def sample_benchmark_images(
 ) -> List[ImageItem]:
     """
     Perform stratified sampling across all disease classes to select target_count representative images.
-    Saves and returns deterministic image sample list.
+    Saves and returns deterministic image sample list. Dynamically re-resolves image paths relative to dataset_dir.
     """
     output_file = Path(output_path)
     if output_file.exists():
         with open(output_file, "r", encoding="utf-8") as f:
             data = json.load(f)
-            return [ImageItem(**item) for item in data]
+            items = []
+            for item in data:
+                img_path = item.get("image_path")
+                rel_path = item.get("relative_path")
+                if not img_path or not os.path.exists(img_path):
+                    if rel_path:
+                        img_path = str(Path(dataset_dir) / rel_path)
+                item["image_path"] = img_path
+                items.append(ImageItem(**item))
+            return items
 
     items, by_disease = discover_dataset(dataset_dir)
     diseases = sorted(by_disease.keys())
