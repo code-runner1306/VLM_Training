@@ -119,12 +119,26 @@ async def main():
         logger.info(f"Scanning dataset at '{args.dataset_dir}'...")
         all_items, _ = discover_dataset(args.dataset_dir)
         total_found = len(all_items)
-        if args.num_samples is not None:
-            end_idx = min(args.start_index + args.num_samples, total_found)
+
+        end_idx = args.end_index if args.end_index is not None else total_found
+        sliced_items = all_items[args.start_index:end_idx]
+
+        if args.resume and args.num_samples is not None:
+            uncompleted = [
+                item for item in sliced_items
+                if not checkpoint_mgr.is_completed(item.image_id)
+            ]
+            items = uncompleted[:args.num_samples]
+            logger.info(
+                f"Discovered {total_found} total images ({len(uncompleted)} uncompleted in range). "
+                f"Selecting next {len(items)} unannotated images for this run."
+            )
+        elif args.num_samples is not None:
+            items = sliced_items[:args.num_samples]
+            logger.info(f"Discovered {total_found} total images. Selecting first {len(items)} images.")
         else:
-            end_idx = args.end_index if args.end_index is not None else total_found
-        items = all_items[args.start_index:end_idx]
-        logger.info(f"Discovered {total_found} total images. Processing range [{args.start_index}:{end_idx}] ({len(items)} items).")
+            items = sliced_items
+            logger.info(f"Discovered {total_found} total images. Processing range [{args.start_index}:{end_idx}] ({len(items)} items).")
 
     completed_count = 0
     skipped_count = 0
