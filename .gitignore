@@ -6,14 +6,28 @@ dist/
 wheels/
 *.egg-info
 
-# Virtual environments
+# Virtual environments & agent dirs
 .venv
 .agent/
 .codex/
 .opencode/
-outputs/
 .env.*
-Cotton_dataset/
 .env
+
 openspec/
 logs/
+
+# Raw dataset
+Cotton_dataset/
+
+# LOCAL MODEL WEIGHTS & CHECKPOINTS (NEVER COMMIT TO GIT)
+models/
+checkpoints/
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.gguf
+*.h5
+*.onnx

@@ -1,0 +1,54 @@
+{
+  "disease": "Thrips",
+  "typical_symptoms": [
+    "Upward cupping or puckering of young leaves",
+    "Silvering or bronzing appearance on the underside of leaves",
+    "Presence of tiny slender yellow to dark-colored insects along leaf veins",
+    "Ragged, torn, or crinkled leaf blades as leaves expand",
+    "Stunted growth of seedlings and damaged terminal buds"
+  ],
+  "visual_characteristics": [
+    "Minute elongated spindle-shaped nymphs and adults visible on leaf surfaces",
+    "Silvery or shiny feeding streaks along primary and secondary leaf veins",
+    "Tiny black specks of fecal matter (frass) scattered near feeding sites",
+    "Wrinkled and distorted leaf topography"
+  ],
+  "affected_regions": [
+    "leaves",
+    "veins",
+    "petioles",
+    "terminal buds"
+  ],
+  "lesion_characteristics": [
+    "Irregular elongated feeding streaks",
+    "Rough, scabby scarring without a distinct chlorotic halo",
+    "Tiny necrotic flecks scattered along feeding zones",
+    "Variable size ranging from microscopic pinpricks to confluent scarred patches"
+  ],
+  "color_characteristics": [
+    "Insects: translucent pale yellow, amber, to dark brown",
+    "Leaf damage: silvery-white to metallic sheen initially, turning bronzed, yellowed, and eventually brown/necrotic along damaged margins"
+  ],
+  "texture_characteristics": [
+    "Wrinkled",
+    "Crinkled",
+    "Puckered",
+    "Dry",
+    "Rough"
+  ],
+  "spatial_patterns": [
+    "Concentrated along main leaf veins and lower leaf surfaces",
+    "Irregular scattered feeding trails across tender new growth"
+  ],
+  "distinguishing_features": [
+    "Direct visual detection of tiny, slender, crawling yellow/brown thrips insects on the leaf surface",
+    "Upward cupping of young leaves paired with silvery feeding scars and black frass dots",
+    "Damage primarily concentrated on tender young foliage and leaf veins"
+  ],
+  "commonly_confused_with": [
+    "Twospotted spider mites",
+    "Cotton aphids",
+    "Herbicide drift injury (e.g., phenoxy/2,4-D damage)",
+    "Sandblasting or wind injury"
+  ]
+}

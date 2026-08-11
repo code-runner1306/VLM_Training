@@ -4,6 +4,8 @@ from vlm_annotation.src.models.gemini import GeminiVisionModel
 from vlm_annotation.src.models.groq import GroqVisionModel
 from vlm_annotation.src.models.nvidia_nim import NvidiaVisionModel
 from vlm_annotation.src.models.openrouter import OpenRouterVisionModel
+from vlm_annotation.src.models.ollama import OllamaVisionModel
+from vlm_annotation.src.models.huggingface import HuggingFaceVisionModel
 
 
 def create_vision_model(model_config: Dict[str, Any]) -> VisionModel:
@@ -19,5 +21,9 @@ def create_vision_model(model_config: Dict[str, Any]) -> VisionModel:
         return GroqVisionModel(provider_name=name, model_id=model_id, config=model_config)
     elif provider == "openrouter":
         return OpenRouterVisionModel(provider_name=name, model_id=model_id, config=model_config)
+    elif provider == "ollama":
+        return OllamaVisionModel(provider_name=name, model_id=model_id, config=model_config)
+    elif provider in ["huggingface", "hf"]:
+        return HuggingFaceVisionModel(provider_name=name, model_id=model_id, config=model_config)
     else:
         raise ValueError(f"Unsupported VLM provider: {provider}")

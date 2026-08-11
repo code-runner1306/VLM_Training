@@ -1,0 +1,57 @@
+{
+  "disease": "bacterial blight fruit",
+  "typical_symptoms": [
+    "Water-soaked circular spots on developing cotton bolls",
+    "Dark brown to black sunken lesions on boll carpels",
+    "Premature boll shedding or defective boll opening",
+    "Internal lint discoloration and staining",
+    "Co-occurrence with angular leaf spots and stem black arm lesions"
+  ],
+  "visual_characteristics": [
+    "Dark green water-soaked spots on green boll tissue",
+    "Sunken, dark brown to reddish-black necrotic patches on fruit",
+    "Greasy or shiny surface texture on early lesions",
+    "Dark speckling and mottled necrotic areas on immature bolls"
+  ],
+  "affected_regions": [
+    "bolls",
+    "leaves",
+    "veins",
+    "stems",
+    "petioles"
+  ],
+  "lesion_characteristics": [
+    "Circular to irregular shape",
+    "Water-soaked, defined margins",
+    "Sunken necrotic center",
+    "Sizes ranging from small 2-5 mm speckles to large coalesced patches"
+  ],
+  "color_characteristics": [
+    "Dark green water-soaked appearance initially",
+    "Progressing to reddish-brown, dark chocolate brown, and jet black",
+    "Yellowish to reddish-brown lint staining inside affected bolls"
+  ],
+  "texture_characteristics": [
+    "Water-soaked",
+    "Greasy",
+    "Sunken",
+    "Dry",
+    "Crusty"
+  ],
+  "spatial_patterns": [
+    "Scattered individual spots across carpel walls",
+    "Clustered near bract attachments and carpel sutures",
+    "Coalescing into large irregular necrotic zones"
+  ],
+  "distinguishing_features": [
+    "Characteristic water-soaked 'greasy' lesion margins on young bolls",
+    "Absence of external fluffy fungal mycelium in early primary bacterial infection",
+    "Strong association with angular (vein-bounded) leaf lesions on the same plant"
+  ],
+  "commonly_confused_with": [
+    "Anthracnose boll rot (Colletotrichum gossypii)",
+    "Fusarium boll rot",
+    "Diplodia boll rot",
+    "Stink bug feeding punctures and internal boll rot"
+  ]
+}

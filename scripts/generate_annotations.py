@@ -8,11 +8,14 @@ import sys
 import time
 from pathlib import Path
 from dotenv import load_dotenv
+import numpy as np
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from vlm_annotation.src.annotation.checkpoint import CheckpointManager
+from vlm_annotation.src.annotation.ollama_health import check_ollama_server_and_model
+from vlm_annotation.src.annotation.hf_health import check_huggingface_environment_and_model
 from vlm_annotation.src.annotation.retry import RateLimiter, execute_with_retry
 from vlm_annotation.src.annotation.validator import AnnotationValidator
 from vlm_annotation.src.dataset import discover_dataset
@@ -50,29 +53,75 @@ def load_disease_profile(disease_name: str) -> dict:
     return {"disease": disease_name}
 
 
+def save_run_statistics(out_dir: Path, stats_data: dict):
+    with open(out_dir / "statistics.json", "w", encoding="utf-8") as f:
+        json.dump(stats_data, f, indent=2)
+
+    with open(out_dir / "statistics.md", "w", encoding="utf-8") as f:
+        f.write(f"# Annotation Run Statistics Summary\n\n")
+        f.write(f"- **Provider / Model:** `{stats_data.get('provider')}` / `{stats_data.get('model')}`\n")
+        f.write(f"- **Total Images:** `{stats_data.get('total_images')}`\n")
+        f.write(f"- **Successful Annotations:** `{stats_data.get('successful')}`\n")
+        f.write(f"- **Failed Annotations:** `{stats_data.get('failed')}`\n")
+        f.write(f"- **Average Latency:** `{stats_data.get('avg_latency_sec', 0):.2f}s`\n")
+        f.write(f"- **Median Latency:** `{stats_data.get('median_latency_sec', 0):.2f}s`\n")
+        f.write(f"- **P95 Latency:** `{stats_data.get('p95_latency_sec', 0):.2f}s`\n")
+        f.write(f"- **Throughput:** `{stats_data.get('images_per_min', 0):.1f} images/min`\n")
+        f.write(f"- **Estimated 20,000-Image Runtime:** `{stats_data.get('est_20k_hours', 0):.2f} hours`\n")
+
+
 async def main():
     parser = argparse.ArgumentParser(description="Full Cotton Disease Dataset VLM Synthetic Annotation Pipeline.")
-    parser.add_argument("--dataset-dir", type=str, default="dataset", help="Path to dataset root folder")
-    parser.add_argument("--output-dir", type=str, default="outputs/annotations", help="Path to outputs directory")
-    parser.add_argument("--provider", type=str, default="gemini", help="VLM Provider (gemini, nvidia, groq, openrouter)")
+    parser.add_argument("--dataset-dir", type=str, default="Cotton_dataset", help="Path to dataset root folder")
+    parser.add_argument("--output-dir", type=str, default=None, help="Path to outputs directory")
+    parser.add_argument("--provider", type=str, default="gemini", help="VLM Provider (gemini, huggingface, hf, ollama, nvidia, groq, openrouter)")
     parser.add_argument("--model", type=str, default="gemini-flash-latest", help="Model ID or name")
+    parser.add_argument("--ollama-host", type=str, default="http://127.0.0.1:11434", help="Host URL for local Ollama server")
     parser.add_argument("--resume", action="store_true", help="Resume annotation, skipping existing image IDs")
     parser.add_argument("--start-index", type=int, default=0, help="Start image index for batch processing")
     parser.add_argument("--end-index", type=int, default=None, help="End image index for batch processing")
     parser.add_argument("--num-samples", type=int, default=None, help="Limit total number of images to annotate")
     parser.add_argument("--retry-failed", action="store_true", help="Re-process only items in failed.jsonl")
+    parser.add_argument("--benchmark-speed", action="store_true", help="Run speed & throughput benchmark mode and estimate 20,000-image runtime")
     args = parser.parse_args()
 
-    out_dir = Path(args.output_dir)
+    # Determine provider-isolated output directory
+    timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    clean_model_tag = args.model.replace(":", "-").replace("/", "_")
+
+    if args.output_dir:
+        out_dir = Path(args.output_dir)
+    elif args.provider.lower() in ["huggingface", "hf"]:
+        out_dir = Path(f"outputs/annotations/huggingface/{clean_model_tag}/run_{timestamp_str}")
+    elif args.provider.lower() == "ollama":
+        out_dir = Path(f"outputs/annotations/ollama/{clean_model_tag}/run_{timestamp_str}")
+    else:
+        out_dir = Path(f"outputs/annotations/{args.provider}/{clean_model_tag}/run_{timestamp_str}")
+
     out_dir.mkdir(parents=True, exist_ok=True)
     Path("logs").mkdir(exist_ok=True)
+
+    # Pre-flight health checks
+    if args.provider.lower() in ["huggingface", "hf"]:
+        logger.info(f"Running Pre-Flight Health Check for Hugging Face model '{args.model}'...")
+        ok, msg = check_huggingface_environment_and_model(model_id=args.model)
+        if not ok:
+            logger.error(msg)
+            sys.exit(1)
+        logger.info(msg)
+    elif args.provider.lower() == "ollama":
+        logger.info(f"Running Pre-Flight Health Check for Ollama model '{args.model}' at {args.ollama_host}...")
+        ok, msg = check_ollama_server_and_model(host=args.ollama_host, model_name=args.model)
+        if not ok:
+            logger.error(msg)
+            sys.exit(1)
+        logger.info(msg)
 
     config = load_config()
     model_cfg = None
 
-    # Match model config from models.yaml or create dynamic config
     for m in config.get("models", []):
-        if m.get("model") == args.model or m.get("name") == args.model:
+        if m.get("model") == args.model or m.get("name") == args.model or (m.get("provider") == args.provider and args.provider == "ollama"):
             model_cfg = m
             break
 
@@ -81,8 +130,12 @@ async def main():
             "provider": args.provider,
             "model": args.model,
             "name": f"{args.provider}-{args.model}",
-            "rate_limit": {"requests_per_minute": 30, "max_concurrency": 5}
+            "host": args.ollama_host,
+            "rate_limit": {"requests_per_minute": 60 if args.provider == "ollama" else 30, "max_concurrency": 1 if args.provider == "ollama" else 5}
         }
+    else:
+        model_cfg["host"] = args.ollama_host
+        model_cfg["model"] = args.model
 
     try:
         model = create_vision_model(model_cfg)
@@ -92,8 +145,8 @@ async def main():
 
     rate_limit_cfg = model_cfg.get("rate_limit", {})
     limiter = RateLimiter(
-        requests_per_minute=rate_limit_cfg.get("requests_per_minute", 30),
-        max_concurrency=rate_limit_cfg.get("max_concurrency", 5)
+        requests_per_minute=rate_limit_cfg.get("requests_per_minute", 60 if args.provider == "ollama" else 30),
+        max_concurrency=rate_limit_cfg.get("max_concurrency", 1 if args.provider == "ollama" else 5)
     )
 
     checkpoint_mgr = CheckpointManager(
@@ -104,7 +157,7 @@ async def main():
     validator = AnnotationValidator()
     prompt_template = load_annotation_prompt()
 
-    # Discover images or load failed queue
+    # Discover images
     if args.retry_failed:
         logger.info("RETRY FAILED MODE: Loading items from failed.jsonl...")
         items = []
@@ -123,16 +176,17 @@ async def main():
         end_idx = args.end_index if args.end_index is not None else total_found
         sliced_items = all_items[args.start_index:end_idx]
 
-        if args.resume and args.num_samples is not None:
+        if args.benchmark_speed:
+            sample_size = args.num_samples or 20
+            items = sliced_items[:sample_size]
+            logger.info(f"[SPEED BENCHMARK MODE] Profiling throughput on next {len(items)} sample images...")
+        elif args.resume and args.num_samples is not None:
             uncompleted = [
                 item for item in sliced_items
                 if not checkpoint_mgr.is_completed(item.image_id)
             ]
             items = uncompleted[:args.num_samples]
-            logger.info(
-                f"Discovered {total_found} total images ({len(uncompleted)} uncompleted in range). "
-                f"Selecting next {len(items)} unannotated images for this run."
-            )
+            logger.info(f"Discovered {total_found} total images. Processing next {len(items)} unannotated images.")
         elif args.num_samples is not None:
             items = sliced_items[:args.num_samples]
             logger.info(f"Discovered {total_found} total images. Selecting first {len(items)} images.")
@@ -143,7 +197,7 @@ async def main():
     completed_count = 0
     skipped_count = 0
     failed_count = 0
-    total_latency_ms = 0.0
+    latencies_sec = []
     start_time = time.monotonic()
 
     for idx, item in enumerate(items, start=1):
@@ -179,8 +233,8 @@ async def main():
                 model_instance=model
             )
 
-            latency_ms = (time.monotonic() - item_start) * 1000.0
-            total_latency_ms += latency_ms
+            latency_s = time.monotonic() - item_start
+            latencies_sec.append(latency_s)
 
             if response.status == "success" and response.parsed_json:
                 is_valid, quality_status, validation_msg = validator.validate(response.parsed_json, disease_name)
@@ -224,39 +278,78 @@ async def main():
             }
             checkpoint_mgr.save_failed(fail_record)
 
-        # Real-time CLI progress metrics
         elapsed_sec = time.monotonic() - start_time
         processed = completed_count + failed_count
         rpm = (processed / (elapsed_sec / 60.0)) if elapsed_sec > 0 else 0.0
-        avg_lat = (total_latency_ms / processed / 1000.0) if processed > 0 else 0.0
+        avg_lat = float(np.mean(latencies_sec)) if latencies_sec else 0.0
         remaining = len(items) - (idx)
         eta_sec = (remaining / (rpm / 60.0)) if rpm > 0 else 0
 
         logger.info(
             f"Progress: [{idx}/{len(items)}] | Done: {completed_count} | Skipped: {skipped_count} | "
             f"Failed: {failed_count} | RPM: {rpm:.1f} | Avg Lat: {avg_lat:.2f}s | "
-            f"429 Hits: {model.rate_limit_hits} | ETA: {int(eta_sec//60)}m {int(eta_sec%60)}s"
+            f"ETA: {int(eta_sec//60)}m {int(eta_sec%60)}s"
         )
         sys.stdout.flush()
 
-    # Save model diagnostic counters to outputs/model_metrics.json
-    metrics_file = Path("outputs/model_metrics.json")
-    all_metrics = {}
-    if metrics_file.exists():
-        with open(metrics_file, "r", encoding="utf-8") as f:
-            try:
-                all_metrics = json.load(f)
-            except Exception:
-                pass
-    all_metrics[model.model_id] = model.get_metrics()
-    with open(metrics_file, "w", encoding="utf-8") as f:
-        json.dump(all_metrics, f, indent=2)
+    total_runtime_s = time.monotonic() - start_time
+    avg_lat_s = float(np.mean(latencies_sec)) if latencies_sec else 0.0
+    median_lat_s = float(np.median(latencies_sec)) if latencies_sec else 0.0
+    p95_lat_s = float(np.percentile(latencies_sec, 95)) if latencies_sec else 0.0
+    throughput_ipm = (completed_count / (total_runtime_s / 60.0)) if total_runtime_s > 0 else 0.0
+    est_20k_hrs = (20000 / (throughput_ipm * 60.0)) if throughput_ipm > 0 else 0.0
 
-    logger.info(f"\n==========================================")
-    logger.info(f"Annotation Run Complete for '{model.model_id}'!")
-    logger.info(f"Total Completed: {completed_count} | Skipped: {skipped_count} | Failed: {failed_count}")
-    logger.info(f"Cumulative Model Counters: {model.get_metrics()}")
-    logger.info(f"==========================================")
+    stats_summary = {
+        "provider": model.provider_name,
+        "model": model.model_id,
+        "host": args.ollama_host if args.provider == "ollama" else "cloud",
+        "total_images": len(items),
+        "successful": completed_count,
+        "skipped": skipped_count,
+        "failed": failed_count,
+        "avg_latency_sec": round(avg_lat_s, 2),
+        "median_latency_sec": round(median_lat_s, 2),
+        "p95_latency_sec": round(p95_lat_s, 2),
+        "images_per_min": round(throughput_ipm, 2),
+        "total_runtime_sec": round(total_runtime_s, 2),
+        "est_20k_hours": round(est_20k_hrs, 2),
+    }
+
+    save_run_statistics(out_dir, stats_summary)
+
+    # Output run metadata and resource_metrics.json
+    with open(out_dir / "resource_metrics.json", "w", encoding="utf-8") as f:
+        json.dump(stats_summary, f, indent=2)
+
+    with open(out_dir / "run_metadata.json", "w", encoding="utf-8") as f:
+        json.dump({
+            "provider": args.provider,
+            "model": args.model,
+            "ollama_host": args.ollama_host,
+            "concurrency": model_cfg.get("concurrency", 1),
+            "output_dir": str(out_dir),
+            "timestamp": timestamp_str,
+            "speed_benchmark_mode": args.benchmark_speed,
+        }, f, indent=2)
+
+    if args.benchmark_speed:
+        print("\n" + "=" * 60)
+        print("          SPEED & THROUGHPUT BENCHMARK SUMMARY")
+        print("=" * 60)
+        print(f"Model:                    {model.model_id}")
+        print(f"Images Tested:            {completed_count}")
+        print(f"Average Latency:          {avg_lat_s:.2f} sec")
+        print(f"Median Latency:           {median_lat_s:.2f} sec")
+        print(f"P95 Latency:              {p95_lat_s:.2f} sec")
+        print(f"Throughput:               {throughput_ipm:.1f} images/min")
+        print(f"Estimated 20,000-Image Runtime: ~{est_20k_hrs:.1f} hours ({est_20k_hrs/24:.1f} days)")
+        print("=" * 60 + "\n")
+    else:
+        logger.info(f"\n==========================================")
+        logger.info(f"Annotation Run Complete for '{model.model_id}'!")
+        logger.info(f"Total Completed: {completed_count} | Skipped: {skipped_count} | Failed: {failed_count}")
+        logger.info(f"Saved run outputs to: {out_dir}")
+        logger.info(f"==========================================")
 
 
 if __name__ == "__main__":

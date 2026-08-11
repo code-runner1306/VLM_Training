@@ -1,0 +1,18 @@
+{
+  "experiment": "qwen25vl-3b-v1",
+  "total_training_time_seconds": 0.0,
+  "total_training_time_hours": 0.0,
+  "peak_vram_gb": 0.0,
+  "adapter_size_mb": 0.0,
+  "total_parameters": 0,
+  "trainable_parameters": 0,
+  "trainable_percentage": 0,
+  "hardware": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python_version": "3.13.3",
+    "cpu": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+    "cuda_available": false,
+    "device_count": 0,
+    "gpu_name": "N/A (CPU)"
+  }
+}

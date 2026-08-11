@@ -1,0 +1,30 @@
+# Dataset configuration parameters
+
+dataset:
+  name: "cotton_disease_synthetic_annotations"
+  manifest_dir: "outputs/dataset"
+  train_manifest: "outputs/dataset/train_manifest.jsonl"
+  val_manifest: "outputs/dataset/validation_manifest.jsonl"
+  test_manifest: "outputs/dataset/test_manifest.jsonl"
+  split_seed: 42
+  user_prompt: "What disease is affecting this cotton plant?\n\nAnalyze the image and explain your diagnosis based only on visible evidence."
+  max_sequence_length: 2048
+  classes:
+    - "Alternaria_leaf_spot"
+    - "Aphid"
+    - "Army worm"
+    - "Bacterial blight leaf"
+    - "Dusky_Cotton_Bug"
+    - "Grey mildew"
+    - "Healthy"
+    - "Jassid"
+    - "Leaf_Roller_Pest"
+    - "Leaf_Roller_Symptoms"
+    - "Mealy_bug"
+    - "Pink_Bollworm_Pest"
+    - "Pink_Bollworm_Symptoms"
+    - "Red_cotton_bug"
+    - "Reddening"
+    - "Thrips"
+    - "Whitefly"
+    - "bacterial blight fruit"

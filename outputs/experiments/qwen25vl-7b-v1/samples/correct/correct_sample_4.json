@@ -1,0 +1,22 @@
+{
+  "image_id": "f13064640775aa62",
+  "image_path": "C:\\Users\\Mayank Mehta\\Projects\\PythonProjects\\VLM_Training\\Cotton_dataset\\Alternaria_leaf_spot\\57a86c7a-4ff4-429e-b586-67addffa1838.Jpg",
+  "ground_truth_disease": "Alternaria_leaf_spot",
+  "predicted_disease": "Alternaria_leaf_spot",
+  "raw_text": "Disease: Alternaria_leaf_spot\n\nVisible observations:\n- numerous circular to sub-circular spots distributed widely across the green leaf blade\n- distinct target-board concentric ring patterns inside many of the lesions\n- tan to light brown necrotic centers within individual spots\n- dark reddish-brown to purple borders surrounding the spots\n\nDiagnostic evidence:\n- prominent concentric target rings within circular spots matching typical Alternaria lesion patterns\n- clear brown necrotic centers bordered by dark reddish-brown margins\n\nReasoning:\nThe photograph clearly exhibits circular leaf spots featuring distinct target-board concentric rings with tan centers and dark reddish-brown margins, which is classic visual evidence matching the disease profile for Alternaria_leaf_spot.",
+  "parsed_output": {
+    "predicted_disease": "Alternaria_leaf_spot",
+    "visible_observations": [
+      "numerous circular to sub-circular spots distributed widely across the green leaf blade",
+      "distinct target-board concentric ring patterns inside many of the lesions",
+      "tan to light brown necrotic centers within individual spots",
+      "dark reddish-brown to purple borders surrounding the spots"
+    ],
+    "diagnostic_evidence": [
+      "prominent concentric target rings within circular spots matching typical Alternaria lesion patterns",
+      "clear brown necrotic centers bordered by dark reddish-brown margins"
+    ],
+    "reasoning": "The photograph clearly exhibits circular leaf spots featuring distinct target-board concentric rings with tan centers and dark reddish-brown margins, which is classic visual evidence matching the disease profile for Alternaria_leaf_spot.",
+    "raw_text": "Disease: Alternaria_leaf_spot\n\nVisible observations:\n- numerous circular to sub-circular spots distributed widely across the green leaf blade\n- distinct target-board concentric ring patterns inside many of the lesions\n- tan to light brown necrotic centers within individual spots\n- dark reddish-brown to purple borders surrounding the spots\n\nDiagnostic evidence:\n- prominent concentric target rings within circular spots matching typical Alternaria lesion patterns\n- clear brown necrotic centers bordered by dark reddish-brown margins\n\nReasoning:\nThe photograph clearly exhibits circular leaf spots featuring distinct target-board concentric rings with tan centers and dark reddish-brown margins, which is classic visual evidence matching the disease profile for Alternaria_leaf_spot."
+  }
+}

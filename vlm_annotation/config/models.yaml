@@ -22,3 +22,33 @@ models:
     rate_limit:
       requests_per_minute: 30
       max_concurrency: 5
+
+  - provider: ollama
+    name: ollama-qwen3-vl-8b
+    model: qwen3-vl:8b
+    host: http://127.0.0.1:11434
+    enabled: true
+    rate_limit:
+      requests_per_minute: 60
+      max_concurrency: 1
+    options:
+      temperature: 0.1
+      top_p: 0.9
+    generation:
+      max_tokens: 1000
+    concurrency: 1
+    retries: 3
+    timeout_seconds: 120
+    think: false
+
+  - provider: huggingface
+    name: hf-qwen2.5-vl-7b
+    model: Qwen/Qwen2.5-VL-7B-Instruct
+    enabled: true
+    quantization:
+      enabled: true
+      bits: 4
+      quant_type: nf4
+    rate_limit:
+      requests_per_minute: 60
+      max_concurrency: 1

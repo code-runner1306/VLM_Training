@@ -1,0 +1,10 @@
+{
+  "seed": 42,
+  "train_ratio": 0.8,
+  "val_ratio": 0.1,
+  "test_ratio": 0.1,
+  "total_eligible": 797,
+  "train_count": 634,
+  "validation_count": 82,
+  "test_count": 81
+}

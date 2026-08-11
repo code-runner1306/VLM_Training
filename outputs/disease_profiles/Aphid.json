@@ -1,0 +1,55 @@
+{
+  "disease": "Aphid",
+  "typical_symptoms": [
+    "Downward curling and distortion of young leaves",
+    "Stunting of overall plant growth and young terminal shoots",
+    "Excretion of sticky honeydew covering leaf surface",
+    "Growth of dark sooty mold on honeydew-covered areas",
+    "Chlorosis or yellowing of foliage due to sap loss"
+  ],
+  "visual_characteristics": [
+    "Dense colonies of tiny, soft-bodied, pear-shaped insects on leaf undersides and stems",
+    "Glossy, wet-looking shiny residue (honeydew) on lower leaves",
+    "Blackish powdery layer (sooty mold) accumulating on upper leaf surfaces",
+    "Wrinkled and cupped leaf margins"
+  ],
+  "affected_regions": [
+    "leaves",
+    "veins",
+    "stems",
+    "petioles",
+    "bolls"
+  ],
+  "lesion_characteristics": [
+    "Absence of true necrotic lesions",
+    "Microscopic feeding punctures causing localized chlorotic spotting",
+    "Leaf distortion rather than defined lesion margins",
+    "Variable size of affected distorted tissue depending on infestation severity"
+  ],
+  "color_characteristics": [
+    "Insects vary in color from light yellow-green to dark green, brown, or almost black",
+    "Leaves turn pale yellow to chlorotic green",
+    "Sooty mold turns honeydew-covered areas dark gray to velvety black"
+  ],
+  "texture_characteristics": [
+    "Sticky and glossy surface from honeydew",
+    "Wrinkled, puckered, and curled leaf blades",
+    "Velvety texture where black sooty mold establishes"
+  ],
+  "spatial_patterns": [
+    "Dense clusters along leaf veins and undersides",
+    "Concentrated infestations on young growing points and tender terminal leaves",
+    "Irregular spread across canopy as honeydew drips to lower foliage"
+  ],
+  "distinguishing_features": [
+    "Direct observation of small, oval/pear-shaped wingless or winged insects with posterior cornicles",
+    "Downward cupping of leaves combined with clear sticky honeydew and black sooty mold",
+    "Presence of cast nymphal skins (white exuviae) on leaf surfaces"
+  ],
+  "commonly_confused_with": [
+    "Jassid (Cotton Leafhopper) injury",
+    "Thrips damage",
+    "Whitefly infestation",
+    "Nitrogen deficiency"
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "disease": "Army worm",
+  "typical_symptoms": [
+    "Irregular leaf chewing and defoliation",
+    "Skeletonized leaf tissue with main veins remaining intact",
+    "Chewed fruit structures including squares and bolls",
+    "Presence of larvae actively feeding on foliage",
+    "Accumulation of dark frass pellets on leaf surfaces"
+  ],
+  "visual_characteristics": [
+    "Caterpillars with prominent longitudinal dark and cream-colored stripes",
+    "Distinct dark triangular markings along the dorsolateral sides of larvae",
+    "Ragged and missing leaf sections with uneven, chewed margins",
+    "Reddish-brown to orange head capsules on feeding caterpillars"
+  ],
+  "affected_regions": [
+    "leaves",
+    "bolls",
+    "stems",
+    "petioles",
+    "squares"
+  ],
+  "lesion_characteristics": [
+    "Irregular chew holes with jagged, torn margins",
+    "Absence of chlorotic halos around cut tissue",
+    "Desiccated tan to light brown rims on freshly chewed leaf edges",
+    "Size ranges from small windowpane nibbles to complete leaf blade consumption"
+  ],
+  "color_characteristics": [
+    "Larvae vary from light green to dark brown or black with yellowish longitudinal lines",
+    "Damaged leaf margins desiccate to pale tan or medium brown",
+    "Frass pellets range from dark green to brown-black"
+  ],
+  "texture_characteristics": [
+    "Rough and jagged chewed foliage edges",
+    "Smooth to slightly velvety larval bodies",
+    "Dry, papery residual leaf tissue left by early instar feeding"
+  ],
+  "spatial_patterns": [
+    "Irregularly scattered defoliation across upper and lower canopy leaves",
+    "Random holes in foliage expanding outward from initial feeding sites",
+    "Localized heavy feeding spots where larval clusters aggregate"
+  ],
+  "distinguishing_features": [
+    "Presence of live striped caterpillars on the plant foliage",
+    "Mechanical chewing damage rather than pathogen-induced necrotic spots",
+    "Dark frass deposits visible on leaf surfaces beneath active feeding sites"
+  ],
+  "commonly_confused_with": [
+    "Cotton bollworm damage",
+    "Cabbage looper feeding",
+    "Hail or wind mechanical damage"
+  ]
+}

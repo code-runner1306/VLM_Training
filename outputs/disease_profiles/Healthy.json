@@ -1,0 +1,54 @@
+{
+  "disease": "Healthy",
+  "typical_symptoms": [
+    "Absence of chlorotic or necrotic leaf spots",
+    "Fully expanded, well-formed palmate leaves with intact margins",
+    "Vigorous stem and petiole growth without vascular discoloration or dark lesions",
+    "Normal boll development without rot or sunken lesions"
+  ],
+  "visual_characteristics": [
+    "Uniform light green to dark green leaf lamina",
+    "Clean, distinct vein patterns without interveinal or vein-clearing chlorosis",
+    "Fine, natural pubescence (trichomes) visible on the underside and veins",
+    "Turgid and smooth leaf surface with no curling, cupping, or wilting"
+  ],
+  "affected_regions": [
+    "leaves",
+    "veins",
+    "bolls",
+    "stems",
+    "petioles"
+  ],
+  "lesion_characteristics": [
+    "No lesions present",
+    "Intact cellular surface structure",
+    "Absence of chlorotic halos",
+    "Absence of necrotic centers",
+    "No sunken or raised spots"
+  ],
+  "color_characteristics": [
+    "Consistent green foliage ranging from bright green to deep forest green",
+    "Normal light green or pinkish-red hue on mature petioles and stems exposed to sunlight",
+    "No abnormal yellowing, bronzing, purpling, or dark brown/black discoloration"
+  ],
+  "texture_characteristics": [
+    "Smooth and turgid leaf lamina",
+    "Slightly velvety or puberulent leaf surface due to healthy trichomes",
+    "Firm leaf blade tissue without dry, brittle, or water-soaked regions"
+  ],
+  "spatial_patterns": [
+    "Uniform green tone across all leaf lobes",
+    "Absence of concentric rings, scattered spotting, or localized blotches",
+    "Clean interveinal regions with no chlorotic streaking"
+  ],
+  "distinguishing_features": [
+    "Complete absence of visible foliar symptoms, fungal mats, or bacterial oozing",
+    "Symmetrical palmate leaf morphology with clear, healthy venation",
+    "Consistent canopy color density and active turgor pressure"
+  ],
+  "commonly_confused_with": [
+    "Early-stage nutrient deficiencies (e.g., mild nitrogen or potassium deficiency)",
+    "Minor mechanical wind or hail damage",
+    "Slight chemical spray drift or herbicidal injury"
+  ]
+}

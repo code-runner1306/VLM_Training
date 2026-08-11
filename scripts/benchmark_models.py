@@ -203,14 +203,37 @@ async def benchmark_single_model(
 
 async def main():
     parser = argparse.ArgumentParser(description="Run 200-image VLM Benchmark across configured models in parallel.")
-    parser.add_argument("--dataset-dir", type=str, default="dataset", help="Dataset root directory")
+    parser.add_argument("--dataset-dir", type=str, default="Cotton_dataset", help="Dataset root directory")
     parser.add_argument("--output-dir", type=str, default="outputs/benchmark", help="Benchmark output folder")
     parser.add_argument("--sample-count", type=int, default=200, help="Number of benchmark sample images")
+    parser.add_argument("--provider", type=str, default=None, help="Specific provider to benchmark (gemini, ollama, nvidia, groq, openrouter)")
+    parser.add_argument("--model", type=str, default=None, help="Specific model ID to benchmark")
+    parser.add_argument("--ollama-host", type=str, default="http://127.0.0.1:11434", help="Ollama server host URL")
     parser.add_argument("--resume", action="store_true", help="Resume interrupted benchmark")
     args = parser.parse_args()
 
     out_path = Path(args.output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
+
+    # Pre-flight health checks
+    if args.provider and args.provider.lower() in ["huggingface", "hf"]:
+        from vlm_annotation.src.annotation.hf_health import check_huggingface_environment_and_model
+        model_id = args.model or "Qwen/Qwen2.5-VL-7B-Instruct"
+        logger.info(f"Running Pre-Flight Health Check for Hugging Face model '{model_id}'...")
+        ok, msg = check_huggingface_environment_and_model(model_id=model_id)
+        if not ok:
+            logger.error(msg)
+            sys.exit(1)
+        logger.info(msg)
+    elif args.provider and args.provider.lower() == "ollama":
+        from vlm_annotation.src.annotation.ollama_health import check_ollama_server_and_model
+        model_id = args.model or "qwen3-vl:8b"
+        logger.info(f"Running Pre-Flight Health Check for Ollama model '{model_id}' at {args.ollama_host}...")
+        ok, msg = check_ollama_server_and_model(host=args.ollama_host, model_name=model_id)
+        if not ok:
+            logger.error(msg)
+            sys.exit(1)
+        logger.info(msg)
 
     # 1. Sample benchmark images
     logger.info(f"Sampling {args.sample_count} benchmark images across dataset '{args.dataset_dir}'...")
@@ -226,6 +249,17 @@ async def main():
     models_config = config.get("models", [])
     prompt_template = load_annotation_prompt()
     evaluator = BenchmarkEvaluator()
+
+    if args.provider and args.model:
+        selected_cfg = {
+            "provider": args.provider,
+            "model": args.model,
+            "name": f"{args.provider}-{args.model.replace(':', '-')}",
+            "host": args.ollama_host,
+            "enabled": True,
+            "rate_limit": {"requests_per_minute": 60 if args.provider == "ollama" else 30, "max_concurrency": 1 if args.provider == "ollama" else 5}
+        }
+        models_config = [selected_cfg]
 
     logger.info(f"\n==========================================")
     logger.info(f"Launching Parallel Benchmarking Workers for Enabled Models")

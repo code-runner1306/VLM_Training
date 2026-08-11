@@ -1,0 +1,24 @@
+{
+  "image_id": "9d7f7f946576cfc3",
+  "image_path": "C:\\Users\\Mayank Mehta\\Projects\\PythonProjects\\VLM_Training\\Cotton_dataset\\Alternaria_leaf_spot\\56ecf9b3-be83-4997-a0fe-094c7fce5dcd.Jpg",
+  "ground_truth_disease": "Alternaria_leaf_spot",
+  "predicted_disease": "Alternaria_leaf_spot",
+  "raw_text": "Disease: Alternaria_leaf_spot\n\nVisible observations:\n- Prominent circular to irregular necrotic lesions on the leaf surface\n- Concentric rings (target-board pattern) clearly visible within the lesions\n- Tan to light brown centers within the spots\n- Darker borders surrounding individual and coalescing spots\n- Smaller separate circular spots with dark brown rings and lighter centers near the bottom leaf tip\n\nDiagnostic evidence:\n- Distinct concentric target-board rings inside brown lesions\n- Coalescence of lesions forming large necrotic zones\n- Well-defined circular spots with contrasting rings matching Alternaria leaf spot symptoms\n\nReasoning:\nThe photograph reveals characteristic target-board lesions featuring prominent concentric rings inside tan-brown necrotic spots with darker borders on a cotton leaf. These visual attributes strongly align with Alternaria leaf spot symptoms.",
+  "parsed_output": {
+    "predicted_disease": "Alternaria_leaf_spot",
+    "visible_observations": [
+      "Prominent circular to irregular necrotic lesions on the leaf surface",
+      "Concentric rings (target-board pattern) clearly visible within the lesions",
+      "Tan to light brown centers within the spots",
+      "Darker borders surrounding individual and coalescing spots",
+      "Smaller separate circular spots with dark brown rings and lighter centers near the bottom leaf tip"
+    ],
+    "diagnostic_evidence": [
+      "Distinct concentric target-board rings inside brown lesions",
+      "Coalescence of lesions forming large necrotic zones",
+      "Well-defined circular spots with contrasting rings matching Alternaria leaf spot symptoms"
+    ],
+    "reasoning": "The photograph reveals characteristic target-board lesions featuring prominent concentric rings inside tan-brown necrotic spots with darker borders on a cotton leaf. These visual attributes strongly align with Alternaria leaf spot symptoms.",
+    "raw_text": "Disease: Alternaria_leaf_spot\n\nVisible observations:\n- Prominent circular to irregular necrotic lesions on the leaf surface\n- Concentric rings (target-board pattern) clearly visible within the lesions\n- Tan to light brown centers within the spots\n- Darker borders surrounding individual and coalescing spots\n- Smaller separate circular spots with dark brown rings and lighter centers near the bottom leaf tip\n\nDiagnostic evidence:\n- Distinct concentric target-board rings inside brown lesions\n- Coalescence of lesions forming large necrotic zones\n- Well-defined circular spots with contrasting rings matching Alternaria leaf spot symptoms\n\nReasoning:\nThe photograph reveals characteristic target-board lesions featuring prominent concentric rings inside tan-brown necrotic spots with darker borders on a cotton leaf. These visual attributes strongly align with Alternaria leaf spot symptoms."
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "total_images": 797,
+  "eligible_images": 797,
+  "excluded_images": 0,
+  "eligibility_percentage": 100.0,
+  "class_total_scanned": {
+    "Alternaria_leaf_spot": 674,
+    "Aphid": 123
+  },
+  "class_distribution": {
+    "Alternaria_leaf_spot": 674,
+    "Aphid": 123
+  },
+  "class_excluded": {},
+  "exclusion_reasons": {},
+  "description_length": {
+    "average": 292.63,
+    "median": 287.0,
+    "min": 163,
+    "max": 495
+  }
+}

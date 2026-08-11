@@ -1,0 +1,56 @@
+{
+  "disease": "Red_cotton_bug",
+  "typical_symptoms": [
+    "Presence of red bugs and nymphs feeding on green and maturing bolls",
+    "Yellowish-brown staining of white cotton lint",
+    "Premature boll opening and shriveling",
+    "Small puncture marks on young green bolls leading to internal boll rot",
+    "Loss of seed viability and reduced lint quality"
+  ],
+  "visual_characteristics": [
+    "Adult insects with vivid red to orange-red elongated bodies, black spots, and black wing membranes",
+    "Distinct white transverse bands or collars visible on the underside and thorax of the insect",
+    "Insects commonly observed mating end-to-end (tail-to-tail) on cotton bolls",
+    "Small dark pinpoint feeding punctures on green boll surfaces",
+    "Yellowish or brownish discolored cotton lint inside open bolls"
+  ],
+  "affected_regions": [
+    "bolls",
+    "seeds",
+    "leaves",
+    "stems"
+  ],
+  "lesion_characteristics": [
+    "Pinpoint feeding punctures on boll surface",
+    "Depressed, dark necrotic spots at feeding sites",
+    "Internal segment necrosis without clear chlorotic halos"
+  ],
+  "color_characteristics": [
+    "Vivid red and orange-red insect body coloration",
+    "Black wing membranes and dark spots on elytra",
+    "White transverse bands across thorax and abdominal segments",
+    "Yellow-brown staining on cotton lint",
+    "Dark brown or black tiny feeding punctures on boll walls"
+  ],
+  "texture_characteristics": [
+    "Dry, shriveled, and hardened boll husks",
+    "Matted and sticky stained lint fibers",
+    "Rough, pitted outer surface on heavily punctured green bolls"
+  ],
+  "spatial_patterns": [
+    "Aggregated clusters of adults and nymphs on individual bolls",
+    "Scattered small feeding punctures across the outer boll surface",
+    "Patchy internal lint staining following insect feeding"
+  ],
+  "distinguishing_features": [
+    "Presence of bright red/orange bugs with black wing tips and white body bands",
+    "Insects frequently observed mating joined end-to-end on bolls",
+    "Characteristic yellow-brown lint staining caused by Nematospora fungal transmission during feeding"
+  ],
+  "commonly_confused_with": [
+    "Dusky cotton bug",
+    "Stink bug boll damage",
+    "Bacterial boll rot",
+    "Cotton bollworm infestation"
+  ]
+}

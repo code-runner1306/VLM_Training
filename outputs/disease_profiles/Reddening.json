@@ -1,0 +1,52 @@
+{
+  "disease": "Reddening",
+  "typical_symptoms": [
+    "Interveinal leaf reddening and bronzing",
+    "Main leaf veins remaining green in early stages",
+    "Premature leaf senescence and early defoliation",
+    "Reduced boll size and poor boll development"
+  ],
+  "visual_characteristics": [
+    "Diffuse purplish-red to reddish-brown coloration across leaf blades",
+    "Clear visual contrast between reddened interveinal zones and green primary veins",
+    "Uniform to patchy bronzing across the mid-to-upper canopy leaves"
+  ],
+  "affected_regions": [
+    "leaves",
+    "veins",
+    "petioles",
+    "stems"
+  ],
+  "lesion_characteristics": [
+    "Non-discrete, diffuse discoloration patches rather than isolated spots",
+    "No distinct chlorotic halo or necrotic rings",
+    "Transition to dry necrotic tissue under severe environmental stress"
+  ],
+  "color_characteristics": [
+    "Pale yellowing to bronzing",
+    "Bright purplish-red to deep maroon",
+    "Dark brown dry necrotic zones in late stages"
+  ],
+  "texture_characteristics": [
+    "Dry",
+    "Brittle",
+    "Wrinkled",
+    "Rough"
+  ],
+  "spatial_patterns": [
+    "Strictly interveinal distribution initially",
+    "Inward progression from leaf margins toward the midrib",
+    "Irregular patches coalescing into full-leaf coverage"
+  ],
+  "distinguishing_features": [
+    "Absence of fungal lesions, pustules, or fruiting bodies",
+    "Green veins contrasting sharply against red interveinal leaf tissue",
+    "Systemic physiological discoloration tied to crop maturity or abiotic stress"
+  ],
+  "commonly_confused_with": [
+    "Magnesium deficiency",
+    "Nitrogen deficiency",
+    "Jassid (leafhopper) damage",
+    "Phosphorus deficiency"
+  ]
+}
