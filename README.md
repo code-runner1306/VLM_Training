@@ -52,6 +52,26 @@ When running long-running jobs on remote college/cloud servers, `main.py` guaran
 
 ---
 
+## ⚙️ Centralized Configuration (`config.py`)
+
+All default pipeline parameters, model selections, batch settings, dataset paths, and remote auto-push preferences can be adjusted directly in **[config.py](file:///c:/Users/Mayank%20Mehta/Projects/PythonProjects/VLM_Training/config.py)**:
+
+```python
+# config.py
+@dataclass
+class PipelineConfig:
+    dataset_dir: str = "Cotton_dataset"
+    annotation_provider: str = "huggingface"       # Options: huggingface, gemini, ollama, nvidia, groq
+    annotation_model: str = "Qwen/Qwen3-VL-8B-Instruct" # Default teacher model
+    train_config: str = "training/configs/qwen25vl_3b.yaml"
+    experiment: str = "qwen25vl-3b-v1"
+    auto_push: bool = True                         # Auto-commit and push to GitHub on run completion or error
+```
+
+*(Any CLI flags passed during command execution will dynamically override these `config.py` defaults).*
+
+---
+
 ## Key Features
 
 - **End-to-End Automation (`main.py`)**: Seamless back-to-back execution from raw images to fine-tuned VLM adapters and comparison reports.

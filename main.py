@@ -19,21 +19,23 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 load_dotenv()
 
 
+from config import config
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="End-to-End VLM Synthetic Annotation & LoRA Fine-Tuning Pipeline with Graceful Error Handling & Auto-Push."
     )
-    parser.add_argument("--dataset-dir", type=str, default="Cotton_dataset", help="Root directory containing raw crop images.")
-    parser.add_argument("--annotation-provider", type=str, default="huggingface", help="Annotation VLM provider (huggingface, hf, gemini, ollama, nvidia, groq, openrouter).")
-    parser.add_argument("--annotation-model", type=str, default="Qwen/Qwen3-VL-8B-Instruct", help="Annotation teacher model ID or name.")
-    parser.add_argument("--ollama-host", type=str, default="http://127.0.0.1:11434", help="Host URL for local Ollama server if using ollama provider.")
-    parser.add_argument("--num-annotation-samples", type=int, default=None, help="Limit number of images to annotate (for testing).")
-    parser.add_argument("--train-config", type=str, default="training/configs/qwen25vl_3b.yaml", help="Path to training config YAML.")
-    parser.add_argument("--experiment", type=str, default="qwen25vl-3b-v1", help="Experiment identifier for fine-tuning run.")
-    parser.add_argument("--skip-annotation", action="store_true", help="Skip annotation generation and proceed straight to dataset prep and training.")
-    parser.add_argument("--skip-training", action="store_true", help="Skip VLM training after annotation generation.")
-    parser.add_argument("--resume", action="store_true", help="Resume interrupted annotation or training run.")
-    parser.add_argument("--no-auto-push", action="store_true", help="Disable automatic git commit & push on run completion or error.")
+    parser.add_argument("--dataset-dir", type=str, default=config.dataset_dir, help="Root directory containing raw crop images.")
+    parser.add_argument("--annotation-provider", type=str, default=config.annotation_provider, help="Annotation VLM provider (huggingface, hf, gemini, ollama, nvidia, groq, openrouter).")
+    parser.add_argument("--annotation-model", type=str, default=config.annotation_model, help="Annotation teacher model ID or name.")
+    parser.add_argument("--ollama-host", type=str, default=config.ollama_host, help="Host URL for local Ollama server if using ollama provider.")
+    parser.add_argument("--num-annotation-samples", type=int, default=config.num_annotation_samples, help="Limit number of images to annotate (for testing).")
+    parser.add_argument("--train-config", type=str, default=config.train_config, help="Path to training config YAML.")
+    parser.add_argument("--experiment", type=str, default=config.experiment, help="Experiment identifier for fine-tuning run.")
+    parser.add_argument("--skip-annotation", action="store_true", default=config.skip_annotation, help="Skip annotation generation and proceed straight to dataset prep and training.")
+    parser.add_argument("--skip-training", action="store_true", default=config.skip_training, help="Skip VLM training after annotation generation.")
+    parser.add_argument("--resume", action="store_true", default=config.resume, help="Resume interrupted annotation or training run.")
+    parser.add_argument("--no-auto-push", action="store_true", default=not config.auto_push, help="Disable automatic git commit & push on run completion or error.")
     return parser.parse_args()
 
 
@@ -255,26 +257,70 @@ def run_dataset_preparation_stage(annotation_path: Path, args, logger: logging.L
     return Path(output_dir)
 
 
+def purge_hf_model_cache(model_id: str, logger: logging.Logger):
+    """Purge downloaded base model weights from Hugging Face hub cache to free disk space."""
+    import shutil
+    clean_repo_folder = "models--" + model_id.replace("/", "--")
+    cache_dir = Path.home() / ".cache" / "huggingface" / "hub" / clean_repo_folder
+
+    if cache_dir.exists():
+        try:
+            shutil.rmtree(cache_dir)
+            logger.info(f"[CACHE CLEANUP] ✓ Deleted cached base model weights for '{model_id}' at: {cache_dir}")
+        except Exception as e:
+            logger.warning(f"[CACHE CLEANUP] Warning: Could not remove cache folder {cache_dir}: {e}")
+    else:
+        logger.info(f"[CACHE CLEANUP] Base model cache folder not found at {cache_dir} (already clean).")
+
+
 def run_training_and_evaluation_stage(args, logger: logging.Logger):
-    """Stage 3 & 4: Train VLM model with QLoRA and execute post-training held-out evaluation."""
+    """Stage 3 & 4: Sequentially train VLM models in training_models list with QLoRA and execute evaluation."""
     logger.info("\n========================================================")
-    logger.info("  STAGE 3: VLM QLoRA Fine-Tuning & Evaluation")
+    logger.info("  STAGE 3 & 4: Sequential Multi-Model VLM QLoRA Training & Evaluation")
     logger.info("========================================================")
 
     from training.scripts.train import main as train_main
 
-    train_args = [
-        "train.py",
-        "--config", args.train_config,
-        "--experiment", args.experiment,
-    ]
-    if args.resume:
-        train_args.append("--resume")
+    # Determine list of training tasks
+    if args.experiment != config.experiment or args.train_config != config.train_config:
+        # User specified explicit CLI flags for single model training
+        models_to_train = [{
+            "experiment": args.experiment,
+            "train_config": args.train_config,
+            "model_id": "Qwen/Qwen2.5-VL-3B-Instruct"
+        }]
+    else:
+        models_to_train = config.training_models
 
-    sys.argv = train_args
-    train_main()
+    logger.info(f"Scheduled {len(models_to_train)} model fine-tuning tasks:")
+    for idx, item in enumerate(models_to_train, start=1):
+        logger.info(f"  [{idx}/{len(models_to_train)}] Experiment: '{item['experiment']}' | Config: '{item['train_config']}'")
 
-    logger.info("✓ Stage 3 & 4 Complete! Model checkpoint & evaluation metrics generated.")
+    for idx, item in enumerate(models_to_train, start=1):
+        exp_name = item["experiment"]
+        cfg_file = item["train_config"]
+        model_id = item.get("model_id", "Qwen/Qwen2.5-VL-3B-Instruct")
+
+        logger.info(f"\n---> Starting Fine-Tuning Task [{idx}/{len(models_to_train)}]: Experiment '{exp_name}' using config '{cfg_file}'")
+
+        train_args = [
+            "train.py",
+            "--config", cfg_file,
+            "--experiment", exp_name,
+        ]
+        if args.resume:
+            train_args.append("--resume")
+
+        sys.argv = train_args
+        train_main()
+
+        logger.info(f"✓ Fine-Tuning & Evaluation Complete for Experiment '{exp_name}'. Adapter weights saved under models/{exp_name}/.")
+
+        # Delete base model cache to free GPU server disk space
+        if config.delete_cache_after_train and model_id:
+            purge_hf_model_cache(model_id, logger)
+
+    logger.info(f"\n✓ All {len(models_to_train)} candidate model fine-tuning & evaluation runs completed successfully!")
 
 
 def run_comparison_stage(logger: logging.Logger):
