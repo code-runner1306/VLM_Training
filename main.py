@@ -7,6 +7,7 @@ import os
 import sys
 import time
 from pathlib import Path
+from typing import Optional
 from dotenv import load_dotenv
 
 # Ensure root directory is in sys.path
