@@ -21,8 +21,8 @@ logs/
 Cotton_dataset/
 
 # LOCAL MODEL WEIGHTS & CHECKPOINTS (NEVER COMMIT TO GIT)
-models/
-checkpoints/
+/models/
+/checkpoints/
 *.safetensors
 *.bin
 *.pt
