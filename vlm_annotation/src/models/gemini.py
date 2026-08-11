@@ -6,6 +6,8 @@ from typing import Any, Dict, Optional
 from PIL import Image
 from vlm_annotation.src.models.base import ModelResponse, VisionModel, extract_json_from_text
 
+import warnings
+
 try:
     from google import genai
     from google.genai import types
@@ -13,11 +15,13 @@ try:
 except ImportError:
     HAS_GOOGLE_GENAI = False
 
-try:
-    import google.generativeai as legacy_genai
-    HAS_LEGACY_GENAI = True
-except ImportError:
-    HAS_LEGACY_GENAI = False
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    try:
+        import google.generativeai as legacy_genai
+        HAS_LEGACY_GENAI = True
+    except ImportError:
+        HAS_LEGACY_GENAI = False
 
 
 class GeminiVisionModel(VisionModel):

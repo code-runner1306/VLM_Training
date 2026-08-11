@@ -34,10 +34,28 @@ It performs the complete cloud GPU benchmarking workflow:
 
 ---
 
+## 🛡️ Remote Server Execution, Graceful Error Handling & Auto-Push
+
+When running long-running jobs on remote college/cloud servers, `main.py` guarantees **zero silent failures**:
+
+1. **Session Logging**: Every execution generates a unique session ID (e.g. `session_qwen25vl-3b-v1_20260811_213500`) and streams logs to both console and `logs/pipeline_<session_id>.log`.
+2. **Real-Time Status Tracking**: `outputs/pipeline_status.json` records live progress (`RUNNING`, `SUCCESS`, or `FAILED`), current stage, and execution timestamps.
+3. **Automatic GitHub Notification on Error**:
+   - If an unhandled exception or OOM occurs at any stage, `main.py` catches it, writes the full traceback to `outputs/experiments/<experiment>/error_log.txt`, and automatically runs `push_github.py` with:
+     `FAILED: Error occurred in <session_id> session - <stage_name>: <error_summary>`
+   - This pushes the error log to GitHub immediately, notifying you of the exact failure even if you are away from the remote terminal.
+4. **Automatic GitHub Notification on Success**:
+   - Upon completion, `main.py` pushes all logs, metrics, plots, and evaluation reports with:
+     `SUCCESS: Run completed for <session_id> session`
+
+*(Note: Pass `--no-auto-push` to disable automatic GitHub commits during local debugging).*
+
+---
+
 ## Key Features
 
 - **End-to-End Automation (`main.py`)**: Seamless back-to-back execution from raw images to fine-tuned VLM adapters and comparison reports.
-- **Multi-Provider VLM Support**: Supports local Hugging Face `transformers` (`Qwen/Qwen2.5-VL-7B-Instruct`), local Ollama (`qwen3-vl:8b`), and cloud hosted APIs (Google Gemini, Groq, NVIDIA NIM, OpenRouter).
+- **Multi-Provider VLM Support**: Supports local Hugging Face `transformers` models (`Qwen/Qwen3-VL-8B-Instruct`, `OpenGVLab/InternVL2_5-8B`, `OpenGVLab/InternVL2_5-14B`, `Qwen/Qwen2.5-VL-7B-Instruct`), local Ollama (`qwen3-vl:8b`), and cloud hosted APIs (Google Gemini, Groq, NVIDIA NIM, OpenRouter).
 - **Uniform Hugging Face Stack**: Shared `transformers` + `bitsandbytes` 4-bit `nf4` quantization ecosystem across both annotation generation and model training.
 - **Leakage-Free Dataset Splitting**: Perceptual image MD5 hashing ensures identical images are placed strictly into the same split (0% train/val/test data leakage).
 - **Comprehensive Evaluation & Safety**: Automated metrics (ECE, F1, Accuracy, Latency, VRAM), error analysis, cross-model composite ranking, and pre-commit Git porcelain safety scanner.
@@ -130,14 +148,24 @@ python scripts/generate_annotations.py --provider huggingface --model Qwen/Qwen2
 python scripts/benchmark_models.py --dataset-dir Cotton_dataset --resume
 ```
 
-#### Benchmark Specific Hugging Face Model on 200 Images
+#### Benchmark Qwen3-VL-8B (8B, Priority ⭐⭐⭐⭐⭐)
 ```bash
-python scripts/benchmark_models.py --provider huggingface --model Qwen/Qwen2.5-VL-7B-Instruct --dataset-dir Cotton_dataset
+python scripts/benchmark_models.py --provider huggingface --model Qwen/Qwen3-VL-8B-Instruct --dataset-dir Cotton_dataset --sample-count 200 --resume
 ```
 
-#### Benchmark Local Ollama Model on 200 Images
+#### Benchmark InternVL3.5-8B / InternVL2.5-8B (8B, Priority ⭐⭐⭐⭐⭐)
 ```bash
-python scripts/benchmark_models.py --provider ollama --model qwen3-vl:8b --dataset-dir Cotton_dataset
+python scripts/benchmark_models.py --provider huggingface --model OpenGVLab/InternVL2_5-8B --dataset-dir Cotton_dataset --sample-count 200 --resume
+```
+
+#### Benchmark InternVL3.5-14B / InternVL2.5-14B (14B, Priority ⭐⭐⭐⭐)
+```bash
+python scripts/benchmark_models.py --provider huggingface --model OpenGVLab/InternVL2_5-14B --dataset-dir Cotton_dataset --sample-count 200 --resume
+```
+
+#### Benchmark Qwen2.5-VL-7B (7B)
+```bash
+python scripts/benchmark_models.py --provider huggingface --model Qwen/Qwen2.5-VL-7B-Instruct --dataset-dir Cotton_dataset --sample-count 200 --resume
 ```
 
 ---

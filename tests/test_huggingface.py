@@ -75,6 +75,50 @@ class TestHuggingFaceVisionModel(unittest.TestCase):
         self.assertIsNotNone(response.parsed_json)
         self.assertEqual(response.parsed_json["disease"], "Bacterial_blight")
 
+    @patch("vlm_annotation.src.models.huggingface.Image.open")
+    @patch("vlm_annotation.src.models.huggingface.AutoModel")
+    @patch("vlm_annotation.src.models.huggingface.AutoTokenizer")
+    @patch("vlm_annotation.src.models.huggingface.AutoProcessor")
+    def test_internvl_chat_generation(self, mock_processor_cls, mock_tokenizer_cls, mock_auto_model_cls, mock_image_open):
+        mock_processor_cls.from_pretrained.side_effect = Exception("No AutoProcessor for InternVL")
+        mock_tokenizer_cls.from_pretrained.return_value = MagicMock()
+
+        mock_img = MagicMock()
+        mock_img.convert.return_value = mock_img
+        mock_image_open.return_value = mock_img
+
+        json_output = json.dumps({
+            "disease": "Curl_virus",
+            "visible_observations": ["Leaf curling"],
+            "diagnostic_evidence": ["Vein thickening"],
+            "reasoning": "Classic viral symptom"
+        })
+
+        mock_model_inst = MagicMock()
+        mock_model_inst.chat.return_value = (json_output, None)
+        mock_auto_model_cls.from_pretrained.return_value = mock_model_inst
+
+        cfg = {
+            "provider": "huggingface",
+            "name": "hf-internvl3.5-8b",
+            "model": "OpenGVLab/InternVL2_5-8B",
+            "quantization": {"enabled": False},
+        }
+
+        model = HuggingFaceVisionModel("hf-internvl3.5-8b", "OpenGVLab/InternVL2_5-8B", cfg)
+
+        response = asyncio.run(
+            model.generate_annotation(
+                image_path="fake/path.jpg",
+                disease_name="Curl_virus",
+                prompt="Analyze image",
+            )
+        )
+
+        self.assertEqual(response.status, "success")
+        self.assertIsNotNone(response.parsed_json)
+        self.assertEqual(response.parsed_json["disease"], "Curl_virus")
+
 
 class TestHuggingFaceHealthCheck(unittest.TestCase):
 

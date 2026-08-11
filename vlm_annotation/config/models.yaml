@@ -52,3 +52,39 @@ models:
     rate_limit:
       requests_per_minute: 60
       max_concurrency: 1
+
+  - provider: huggingface
+    name: hf-qwen3-vl-8b
+    model: Qwen/Qwen3-VL-8B-Instruct
+    enabled: true
+    quantization:
+      enabled: true
+      bits: 4
+      quant_type: nf4
+    rate_limit:
+      requests_per_minute: 60
+      max_concurrency: 1
+
+  - provider: huggingface
+    name: hf-internvl3.5-8b
+    model: OpenGVLab/InternVL2_5-8B
+    enabled: true
+    quantization:
+      enabled: true
+      bits: 4
+      quant_type: nf4
+    rate_limit:
+      requests_per_minute: 60
+      max_concurrency: 1
+
+  - provider: huggingface
+    name: hf-internvl3.5-14b
+    model: OpenGVLab/InternVL2_5-14B
+    enabled: true
+    quantization:
+      enabled: true
+      bits: 4
+      quant_type: nf4
+    rate_limit:
+      requests_per_minute: 60
+      max_concurrency: 1
