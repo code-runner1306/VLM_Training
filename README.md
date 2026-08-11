@@ -1,93 +1,135 @@
 # Production-Grade VLM Synthetic Annotation Pipeline for Cotton Disease Dataset
 
-An end-to-end Python pipeline for generating structured, visual-evidence-grounded synthetic annotations for cotton crop disease leaf/boll images. The pipeline evaluates multiple hosted Vision-Language Models (NVIDIA NIM, Gemini, Groq, OpenRouter) and generates structured JSON supervision dataset files suitable for fine-tuning 7B VLM models (such as Qwen2.5-VL).
+An end-to-end Python pipeline for generating structured, visual-evidence-grounded synthetic annotations for cotton crop disease leaf and boll images. The pipeline evaluates multiple hosted Vision-Language Models (Google Gemini, Groq, NVIDIA NIM, OpenRouter) and generates structured JSON supervision dataset files suitable for fine-tuning 7B VLM models (such as Qwen2.5-VL).
 
 ---
 
-## Features
+## Key Features
 
-- **Multi-Provider VLM Support**: Abstracted `VisionModel` interface supporting NVIDIA NIM (Llama 3.2 90B Vision, Llama 4 Maverick), Google Gemini (Gemini 2.5 Flash, Flash-Lite), Groq (Llama 4 Scout), and OpenRouter.
-- **Dynamic Dataset Discovery**: Recursively scans `.jpg`, `.jpeg`, `.png`, and `.webp` files, automatically extracting disease class labels from folder structures without hardcoded names.
+- **Multi-Provider VLM Support**: Abstracted `VisionModel` interface supporting Google Gemini (`gemini-flash-lite-latest`, `gemini-flash-latest`), Groq (`qwen/qwen3.6-27b`), NVIDIA NIM (`meta/llama-3.2-11b-vision-instruct`), and OpenRouter.
+- **Dynamic Dataset Discovery**: Recursively scans `.jpg`, `.jpeg`, `.png`, and `.webp` files, automatically extracting disease class labels from folder structures without hardcoding.
 - **Disease Profile Generation & Caching**: Generates structured domain disease profiles once per class (`outputs/disease_profiles/{disease}.json`).
-- **Stratified 200-Image Benchmark**: Samples exactly 200 representative images across disease classes and evaluates all candidate VLMs on the exact same sample set.
-- **Multi-Aspect Scoring & Teacher-as-Judge**: Evaluates outputs across Visual Observation (30%), Diagnostic Evidence (25%), Reasoning (20%), Hallucinations (15%), and Schema Reliability (10%).
-- **Resumable & Fault-Tolerant Engine**: Flushes completed annotations immediately per image to `outputs/annotations/annotations.jsonl`. Supports `--resume`, `--start-index`, `--end-index`, and `--retry-failed`.
-- **Per-Model Diagnostic Counters**: Tracks rate limit hits (HTTP 429 count), network errors, and JSON validation failures per model saved to `outputs/model_metrics.json`.
+- **Parallel Stratified Benchmark**: Samples exactly 200 representative images across disease classes and evaluates enabled candidate VLMs concurrently using `asyncio.gather`.
+- **Fault-Tolerant & Resumable Engine**: Flushes completed annotations immediately per image to `outputs/annotations/annotations.jsonl`. Supports `--resume`, `--start-index`, `--end-index`, and `--retry-failed`.
+- **Per-Model Diagnostic Counters**: Tracks rate limit hits (HTTP 429 count), network errors, and JSON validation failures per model, saved to `outputs/model_metrics.json`.
 
 ---
 
 ## Installation & Setup
 
-1. **Install Dependencies**:
+### 1. Create Virtual Environment with `uv`
 ```bash
-pip install -r requirements.txt
+# Create virtual environment
+uv venv
+
+# Activate on Windows PowerShell
+.venv\Scripts\Activate.ps1
+
+# Install dependencies
+uv pip install -r requirements.txt
 ```
 
-2. **Configure API Keys**:
+### 2. Configure API Keys
 Create a `.env` file in the root directory (based on `.env.example`):
 ```env
-NVIDIA_API_KEY=nvapi-your-key-here
 GEMINI_API_KEY=AIzaSy-your-key-here
 GROQ_API_KEY=gsk_your-key-here
+NVIDIA_API_KEY=nvapi-your-key-here
 OPENROUTER_API_KEY=sk-or-v1-your-key-here
 ```
 
 ---
 
-## Execution Workflow
+## Full Execution Commands
 
 ### Step 1: Generate Disease Profiles
-Discovers disease classes and generates domain profiles:
+Discovers disease classes and generates domain profiles for all 18 cotton disease categories using Gemini:
+
 ```bash
-python scripts/generate_disease_profiles.py --dataset-dir dataset --provider gemini --model gemini-2.5-flash
+uv run python -u scripts/generate_disease_profiles.py --dataset-dir Cotton_dataset --provider gemini --model gemini-flash-lite-latest
 ```
 
-### Step 2: Run 200-Image VLM Benchmark
-Evaluates enabled models on a stratified 200-image sample:
+---
+
+### Step 2: Run 200-Image Parallel VLM Benchmark
+Evaluates configured candidate models concurrently on a stratified 200-image sample:
+
 ```bash
-python scripts/benchmark_models.py --dataset-dir dataset --sample-count 200 --resume
+uv run python -u scripts/benchmark_models.py --dataset-dir Cotton_dataset --resume
 ```
 
-### Step 3: Review Benchmark Results
-Check generated benchmark reports:
-- Markdown summary: `outputs/benchmark/report.md`
-- CSV export: `outputs/benchmark/final_report.csv`
-- Full JSON: `outputs/benchmark/final_report.json`
+---
 
-### Step 4: Run Full Annotation Pipeline
-Run full synthetic annotation across all ~20,000 dataset images using the selected winning teacher model:
+### Step 3: Review Benchmark Leaderboard & Reports
+Inspect the generated benchmark reports under `outputs/benchmark/`:
+- **Markdown Leaderboard**: `outputs/benchmark/report.md`
+- **CSV Summary**: `outputs/benchmark/final_report.csv`
+- **Full JSON Report**: `outputs/benchmark/final_report.json`
+
+---
+
+### Step 4: Run Full Synthetic Annotation Pipeline (Gemini Flash-Lite)
+Run full synthetic annotation across all ~20,000 dataset images using **Gemini Flash-Lite**:
+
 ```bash
-python scripts/generate_annotations.py --dataset-dir dataset --provider gemini --model gemini-2.5-flash --resume
+uv run python -u scripts/generate_annotations.py --dataset-dir Cotton_dataset --provider gemini --model gemini-flash-lite-latest --resume
 ```
 
-### Step 5: Resume Interrupted Jobs or Retry Failures
-If the job was interrupted or stopped:
+---
+
+### Additional Useful CLI Options
+
+#### Resume Interrupted Annotation Run
+If your execution is stopped or interrupted, resume seamlessly without repeating work:
 ```bash
-python scripts/generate_annotations.py --dataset-dir dataset --resume
+uv run python -u scripts/generate_annotations.py --dataset-dir Cotton_dataset --provider gemini --model gemini-flash-lite-latest --resume
 ```
 
-To re-process only items recorded in `outputs/annotations/failed.jsonl`:
+#### Annotate a Specific Number of Sample Images
+To process only a specific number of images (e.g., annotate exactly 500 images):
 ```bash
-python scripts/generate_annotations.py --retry-failed
+uv run python -u scripts/generate_annotations.py --dataset-dir Cotton_dataset --provider gemini --model gemini-flash-lite-latest --num-samples 500 --resume
+```
+
+#### Run Specific Batch Indices
+To run a specific slice of images (e.g. index 0 to 5000):
+```bash
+uv run python -u scripts/generate_annotations.py --dataset-dir Cotton_dataset --provider gemini --model gemini-flash-lite-latest --start-index 0 --end-index 5000 --resume
+```
+
+#### Retry Only Failed Items
+To re-process only items logged in `outputs/annotations/failed.jsonl`:
+```bash
+uv run python -u scripts/generate_annotations.py --dataset-dir Cotton_dataset --provider gemini --model gemini-flash-lite-latest --retry-failed
 ```
 
 ---
 
 ## Output Structure
 
-All outputs are saved under `outputs/`:
-- `outputs/disease_profiles/`: Cached disease profiles JSON per class.
-- `outputs/benchmark/`: `benchmark_images.json`, raw model responses (`.jsonl`), `report.md`, `final_report.csv`, `final_report.json`.
-- `outputs/annotations/annotations.jsonl`: Machine-readable structured annotation dataset.
-- `outputs/annotations/failed.jsonl`: Failed request queue for retry.
-- `outputs/model_metrics.json`: Diagnostic rate-limit (429) hit counts and error metrics per model.
-- `outputs/usage.json`: Token usage and request counts per provider/model.
+All pipeline outputs are stored in `outputs/`:
+
+```text
+outputs/
+├── disease_profiles/          # Structured domain profile JSON per disease class
+├── benchmark/                 # Stratified sample list, per-model .jsonl outputs, and reports
+│   ├── benchmark_images.json
+│   ├── report.md
+│   ├── final_report.csv
+│   └── final_report.json
+├── annotations/
+│   ├── annotations.jsonl      # Complete machine-readable synthetic annotation dataset
+│   └── failed.jsonl           # Failed items queue for retries
+├── model_metrics.json         # Per-model 429 rate limit hit counts and error counters
+└── usage.json                 # Cumulative token usage and request statistics
+```
 
 ---
 
 ## Running Unit Tests
 
-To run the automated unit test suite with mock provider calls:
+Run the full pytest suite (11 unit tests covering dataset discovery, validators, rate limiters, checkpoints, and providers):
+
 ```bash
-pytest tests/
+uv run pytest tests/
 ```

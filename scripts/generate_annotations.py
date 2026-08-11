@@ -59,6 +59,7 @@ async def main():
     parser.add_argument("--resume", action="store_true", help="Resume annotation, skipping existing image IDs")
     parser.add_argument("--start-index", type=int, default=0, help="Start image index for batch processing")
     parser.add_argument("--end-index", type=int, default=None, help="End image index for batch processing")
+    parser.add_argument("--num-samples", type=int, default=None, help="Limit total number of images to annotate")
     parser.add_argument("--retry-failed", action="store_true", help="Re-process only items in failed.jsonl")
     args = parser.parse_args()
 
@@ -118,7 +119,10 @@ async def main():
         logger.info(f"Scanning dataset at '{args.dataset_dir}'...")
         all_items, _ = discover_dataset(args.dataset_dir)
         total_found = len(all_items)
-        end_idx = args.end_index if args.end_index is not None else total_found
+        if args.num_samples is not None:
+            end_idx = min(args.start_index + args.num_samples, total_found)
+        else:
+            end_idx = args.end_index if args.end_index is not None else total_found
         items = all_items[args.start_index:end_idx]
         logger.info(f"Discovered {total_found} total images. Processing range [{args.start_index}:{end_idx}] ({len(items)} items).")
 

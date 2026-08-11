@@ -16,3 +16,4 @@ outputs/
 Cotton_dataset/
 .env
 openspec/
+logs/
