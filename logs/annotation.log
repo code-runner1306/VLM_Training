@@ -814,3 +814,18 @@
 2026-08-11 15:59:07,917 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent "HTTP/1.1 200 OK"
 2026-08-11 15:59:07,925 [INFO] Progress: [271/20002] | Done: 270 | Skipped: 0 | Failed: 1 | RPM: 9.2 | Avg Lat: 6.51s | 429 Hits: 0 | ETA: 2141m 57s
 2026-08-11 15:59:07,940 [INFO] AFC is enabled with max remote calls: 10.
+2026-08-11 15:59:22,234 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent "HTTP/1.1 200 OK"
+2026-08-11 15:59:22,243 [INFO] Progress: [272/20002] | Done: 271 | Skipped: 0 | Failed: 1 | RPM: 9.2 | Avg Lat: 6.54s | 429 Hits: 0 | ETA: 2151m 17s
+2026-08-11 15:59:22,256 [INFO] AFC is enabled with max remote calls: 10.
+2026-08-11 15:59:26,654 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent "HTTP/1.1 200 OK"
+2026-08-11 15:59:26,658 [INFO] Progress: [273/20002] | Done: 272 | Skipped: 0 | Failed: 1 | RPM: 9.2 | Avg Lat: 6.53s | 429 Hits: 0 | ETA: 2148m 37s
+2026-08-11 15:59:26,669 [INFO] AFC is enabled with max remote calls: 10.
+2026-08-11 15:59:31,551 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent "HTTP/1.1 200 OK"
+2026-08-11 15:59:31,559 [INFO] Progress: [274/20002] | Done: 273 | Skipped: 0 | Failed: 1 | RPM: 9.2 | Avg Lat: 6.52s | 429 Hits: 0 | ETA: 2146m 32s
+2026-08-11 15:59:31,573 [INFO] AFC is enabled with max remote calls: 10.
+2026-08-11 15:59:44,239 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent "HTTP/1.1 200 OK"
+2026-08-11 15:59:44,248 [INFO] Progress: [275/20002] | Done: 274 | Skipped: 0 | Failed: 1 | RPM: 9.2 | Avg Lat: 6.55s | 429 Hits: 0 | ETA: 2153m 48s
+2026-08-11 15:59:44,262 [INFO] AFC is enabled with max remote calls: 10.
+2026-08-11 15:59:48,427 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent "HTTP/1.1 200 OK"
+2026-08-11 15:59:48,435 [INFO] Progress: [276/20002] | Done: 275 | Skipped: 0 | Failed: 1 | RPM: 9.2 | Avg Lat: 6.54s | 429 Hits: 0 | ETA: 2150m 52s
+2026-08-11 15:59:48,447 [INFO] AFC is enabled with max remote calls: 10.
