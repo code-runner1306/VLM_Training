@@ -9,7 +9,8 @@ except ImportError:
     HfApi = None
 
 
-def generate_model_card(experiment_name: str, base_model_id: str, repo_id: str) -> str:
+def generate_model_card(experiment_name: str, base_model_id: str, repo_id: str, crop_name: str = "Crop") -> str:
+    crop_tag = crop_name.lower().replace(" ", "-")
     card = f"""---
 license: apache-2.0
 base_model: {base_model_id}
@@ -19,20 +20,20 @@ tags:
 - peft
 - lora
 - qlora
-- cotton-disease
+- {crop_tag}-disease
 - agriculture
 pipeline_tag: image-text-to-text
 ---
 
-# Cotton Disease Diagnostic VLM Adapter (`{experiment_name}`)
+# {crop_name.capitalize()} Disease Diagnostic VLM Adapter (`{experiment_name}`)
 
-This is a fine-tuned LoRA/QLoRA adapter for `{base_model_id}` trained on synthetic cotton plant leaf disease annotations.
+This is a fine-tuned LoRA/QLoRA adapter for `{base_model_id}` trained on synthetic {crop_name.lower()} plant leaf disease annotations.
 
 ## Model Summary
 
 - **Base Model:** `{base_model_id}`
 - **Repository:** `https://huggingface.co/{repo_id}`
-- **Domain:** Agriculture / Cotton Leaf Disease Diagnosis
+- **Domain:** Agriculture / {crop_name.capitalize()} Plant Disease Diagnosis
 - **Training Method:** 4-bit QLoRA
 
 ## Usage
@@ -64,7 +65,8 @@ Intended for research and experimental visual plant disease diagnosis. Always ve
 def main():
     parser = argparse.ArgumentParser(description="Publish fine-tuned VLM LoRA adapter to Hugging Face Hub.")
     parser.add_argument("--experiment", type=str, required=True, help="Experiment identifier name.")
-    parser.add_argument("--repo", type=str, required=True, help="Hugging Face repo ID (e.g. username/cotton-disease-vlm).")
+    parser.add_argument("--repo", type=str, required=True, help="Hugging Face repo ID (e.g. username/sugarcane-disease-vlm).")
+    parser.add_argument("--crop", type=str, default="Sugarcane", help="Target crop name (e.g. Sugarcane, Cotton).")
     parser.add_argument("--private", action="store_true", help="Set Hugging Face repo as private.")
     args = parser.parse_args()
 
@@ -96,7 +98,7 @@ def main():
             meta = json.load(f)
             base_model_id = meta.get("model_id", base_model_id)
 
-    model_card_content = generate_model_card(args.experiment, base_model_id, args.repo)
+    model_card_content = generate_model_card(args.experiment, base_model_id, args.repo, crop_name=args.crop)
     with open(os.path.join(adapter_dir, "README.md"), "w", encoding="utf-8") as f:
         f.write(model_card_content)
 

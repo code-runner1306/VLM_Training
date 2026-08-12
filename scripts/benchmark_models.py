@@ -13,6 +13,7 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from config import config
 from vlm_annotation.src.annotation.retry import RateLimiter, execute_with_retry
 from vlm_annotation.src.dataset import ImageItem
 from vlm_annotation.src.evaluation.benchmark import sample_benchmark_images
@@ -209,7 +210,7 @@ async def benchmark_single_model(
 
 async def main():
     parser = argparse.ArgumentParser(description="Run 200-image VLM Benchmark across configured models in parallel.")
-    parser.add_argument("--dataset-dir", type=str, default="Cotton_dataset", help="Dataset root directory")
+    parser.add_argument("--dataset-dir", type=str, default=config.dataset_dir, help="Dataset root directory")
     parser.add_argument("--output-dir", type=str, default="outputs/benchmark", help="Benchmark output folder")
     parser.add_argument("--sample-count", type=int, default=200, help="Number of benchmark sample images")
     parser.add_argument("--provider", type=str, default=None, help="Specific provider to benchmark (gemini, ollama, nvidia, groq, openrouter)")

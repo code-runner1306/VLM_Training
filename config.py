@@ -15,7 +15,7 @@ class PipelineConfig:
     # -------------------------------------------------------------------------
     # 1. Dataset & Directory Paths
     # -------------------------------------------------------------------------
-    dataset_dir: str = "Cotton_dataset"
+    dataset_dir: str = "Sugarcane"
     output_dir: str = "outputs"
     log_dir: str = "logs"
 

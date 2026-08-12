@@ -1,6 +1,6 @@
-# End-to-End VLM Synthetic Annotation Pipeline & LoRA Training for Cotton Disease Dataset
+# End-to-End VLM Synthetic Annotation Pipeline & LoRA Training for Crop Disease Datasets (Sugarcane & Cotton)
 
-An all-in-one, production-grade Python pipeline for generating visual-grounding synthetic annotations across crop leaf/boll image datasets and fine-tuning/evaluating open-source Vision-Language Models (Qwen2.5-VL, Qwen3-VL).
+An all-in-one, production-grade Python pipeline for generating visual-grounding synthetic annotations across crop disease datasets (including **Sugarcane** and **Cotton**) and fine-tuning/evaluating open-source Vision-Language Models (Qwen2.5-VL, Qwen3-VL).
 
 ---
 
@@ -9,7 +9,11 @@ An all-in-one, production-grade Python pipeline for generating visual-grounding 
 To run synthetic annotation and 4-bit QLoRA training **back-to-back automatically in a single execution**:
 
 ```bash
-python main.py --annotation-provider huggingface --annotation-model Qwen/Qwen2.5-VL-7B-Instruct --train-config training/configs/qwen25vl_3b.yaml --experiment qwen25vl-3b-v1
+# Default execution on Sugarcane dataset
+python main.py --dataset-dir Sugarcane --annotation-provider huggingface --annotation-model Qwen/Qwen2.5-VL-7B-Instruct --train-config training/configs/qwen25vl_3b.yaml --experiment qwen25vl-3b-v1
+
+# Execution on Cotton dataset
+python main.py --dataset-dir Cotton_dataset --annotation-provider huggingface --annotation-model Qwen/Qwen2.5-VL-7B-Instruct --train-config training/configs/qwen25vl_3b.yaml --experiment qwen25vl-3b-v1
 ```
 
 `main.py` performs all 5 pipeline stages sequentially:
@@ -21,46 +25,15 @@ python main.py --annotation-provider huggingface --annotation-model Qwen/Qwen2.5
 
 ---
 
-## 📓 Google Colab 200-Image Benchmarking Notebook
-
-A ready-to-run Google Colab notebook is available at [colab_benchmark.ipynb](file:///c:/Users/Mayank%20Mehta/Projects/PythonProjects/VLM_Training/colab_benchmark.ipynb) (or [notebooks/colab_benchmark.ipynb](file:///c:/Users/Mayank%20Mehta/Projects/PythonProjects/VLM_Training/notebooks/colab_benchmark.ipynb)).
-
-It performs the complete cloud GPU benchmarking workflow:
-1. Clones the `VLM_Training` repository from GitHub.
-2. Unzips uploaded `Cotton_dataset.zip` directly into the Colab environment.
-3. Installs dependencies and runs environment pre-flight verification.
-4. Executes the 200-image benchmark on local Hugging Face models (`Qwen/Qwen2.5-VL-7B-Instruct` and `Qwen/Qwen2.5-VL-3B-Instruct`).
-5. Uses `training/scripts/push_github.py` to push evaluation metrics, plots, and report files back to GitHub.
-
----
-
-## 🛡️ Remote Server Execution, Graceful Error Handling & Auto-Push
-
-When running long-running jobs on remote college/cloud servers, `main.py` guarantees **zero silent failures**:
-
-1. **Session Logging**: Every execution generates a unique session ID (e.g. `session_qwen25vl-3b-v1_20260811_213500`) and streams logs to both console and `logs/pipeline_<session_id>.log`.
-2. **Real-Time Status Tracking**: `outputs/pipeline_status.json` records live progress (`RUNNING`, `SUCCESS`, or `FAILED`), current stage, and execution timestamps.
-3. **Automatic GitHub Notification on Error**:
-   - If an unhandled exception or OOM occurs at any stage, `main.py` catches it, writes the full traceback to `outputs/experiments/<experiment>/error_log.txt`, and automatically runs `push_github.py` with:
-     `FAILED: Error occurred in <session_id> session - <stage_name>: <error_summary>`
-   - This pushes the error log to GitHub immediately, notifying you of the exact failure even if you are away from the remote terminal.
-4. **Automatic GitHub Notification on Success**:
-   - Upon completion, `main.py` pushes all logs, metrics, plots, and evaluation reports with:
-     `SUCCESS: Run completed for <session_id> session`
-
-*(Note: Pass `--no-auto-push` to disable automatic GitHub commits during local debugging).*
-
----
-
 ## ⚙️ Centralized Configuration (`config.py`)
 
-All default pipeline parameters, model selections, batch settings, dataset paths, and remote auto-push preferences can be adjusted directly in **[config.py](file:///c:/Users/Mayank%20Mehta/Projects/PythonProjects/VLM_Training/config.py)**:
+All default pipeline parameters, model selections, batch settings, dataset paths, and remote auto-push preferences can be adjusted directly in **[config.py](file:///c:/Users/blais/Desktop/Full-Stack-Projects/VLM_Training/config.py)**:
 
 ```python
 # config.py
 @dataclass
 class PipelineConfig:
-    dataset_dir: str = "Cotton_dataset"
+    dataset_dir: str = "Sugarcane"                 # Options: Sugarcane, Cotton_dataset, or custom crop folder
     annotation_provider: str = "huggingface"       # Options: huggingface, gemini, ollama, nvidia, groq
     annotation_model: str = "Qwen/Qwen3-VL-8B-Instruct" # Default teacher model
     train_config: str = "training/configs/qwen25vl_3b.yaml"

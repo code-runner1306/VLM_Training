@@ -1,6 +1,6 @@
 You are an expert botanical pathologist and agricultural computer vision researcher.
 
-Provide a comprehensive, disease-grounded diagnostic profile for the cotton crop disease named:
+Provide a comprehensive, disease-grounded diagnostic profile for the crop disease named:
 
 "{DISEASE_NAME}"
 
@@ -9,15 +9,15 @@ Return a valid JSON object matching the following structure exactly:
 ```json
 {
   "disease": "{DISEASE_NAME}",
-  "typical_symptoms": ["list of typical symptoms on leaves, bolls, or stems"],
+  "typical_symptoms": ["list of typical symptoms on leaves, stalks, stems, or fruits"],
   "visual_characteristics": ["key visual traits observable in RGB field photographs"],
-  "affected_regions": ["leaves", "veins", "bolls", "stems", "petioles"],
+  "affected_regions": ["leaves", "veins", "stalks", "stems", "petioles"],
   "lesion_characteristics": ["shape, margin, chlorotic halo, necrotic center, size range"],
   "color_characteristics": ["color progression, e.g., yellowing, dark brown, reddish brown"],
   "texture_characteristics": ["powdery, velvety, dry, water-soaked, rough, wrinkled"],
   "spatial_patterns": ["concentric rings, scattered spots, vein-bounded, irregular patches"],
   "distinguishing_features": ["unique traits distinguishing this disease from lookalikes"],
-  "commonly_confused_with": ["other cotton diseases or nutritional deficiencies with similar symptoms"]
+  "commonly_confused_with": ["other plant diseases or nutritional deficiencies with similar symptoms"]
 }
 ```
 

@@ -1,13 +1,13 @@
 # Dataset configuration parameters
 
 dataset:
-  name: "cotton_disease_synthetic_annotations"
+  name: "crop_disease_synthetic_annotations"
   manifest_dir: "outputs/dataset"
   train_manifest: "outputs/dataset/train_manifest.jsonl"
   val_manifest: "outputs/dataset/validation_manifest.jsonl"
   test_manifest: "outputs/dataset/test_manifest.jsonl"
   split_seed: 42
-  user_prompt: "What disease is affecting this cotton plant?\n\nAnalyze the image and explain your diagnosis based only on visible evidence."
+  user_prompt: "What disease is affecting this crop plant?\n\nAnalyze the image and explain your diagnosis based only on visible evidence."
   max_sequence_length: 2048
   classes:
     - "Alternaria_leaf_spot"

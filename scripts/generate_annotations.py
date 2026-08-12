@@ -13,6 +13,7 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from config import config
 from vlm_annotation.src.annotation.checkpoint import CheckpointManager
 from vlm_annotation.src.annotation.ollama_health import check_ollama_server_and_model
 from vlm_annotation.src.annotation.hf_health import check_huggingface_environment_and_model
@@ -24,55 +25,51 @@ from vlm_annotation.src.models.factory import create_vision_model
 load_dotenv()
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.FileHandler("logs/annotation.log", encoding="utf-8"),
-        logging.StreamHandler(sys.stdout)
-    ]
+    format="%(asctime)s [%(levelname)s] %(message)s"
 )
 logger = logging.getLogger("generate_annotations")
-
-
-def load_config():
-    config_path = Path(__file__).resolve().parent.parent / "vlm_annotation" / "config" / "models.yaml"
-    with open(config_path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
-
-
-def load_annotation_prompt():
-    prompt_path = Path(__file__).resolve().parent.parent / "vlm_annotation" / "prompts" / "annotation.txt"
-    with open(prompt_path, "r", encoding="utf-8") as f:
-        return f.read()
 
 
 def load_disease_profile(disease_name: str) -> dict:
     profile_path = Path("outputs/disease_profiles") / f"{disease_name}.json"
     if profile_path.exists():
-        with open(profile_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return {"disease": disease_name}
+        try:
+            with open(profile_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
 
 
-def save_run_statistics(out_dir: Path, stats_data: dict):
-    with open(out_dir / "statistics.json", "w", encoding="utf-8") as f:
-        json.dump(stats_data, f, indent=2)
+def load_model_configs():
+    config_path = Path(__file__).resolve().parent.parent / "vlm_annotation" / "config" / "models.yaml"
+    with open(config_path, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f)
 
-    with open(out_dir / "statistics.md", "w", encoding="utf-8") as f:
-        f.write(f"# Annotation Run Statistics Summary\n\n")
-        f.write(f"- **Provider / Model:** `{stats_data.get('provider')}` / `{stats_data.get('model')}`\n")
-        f.write(f"- **Total Images:** `{stats_data.get('total_images')}`\n")
-        f.write(f"- **Successful Annotations:** `{stats_data.get('successful')}`\n")
-        f.write(f"- **Failed Annotations:** `{stats_data.get('failed')}`\n")
-        f.write(f"- **Average Latency:** `{stats_data.get('avg_latency_sec', 0):.2f}s`\n")
-        f.write(f"- **Median Latency:** `{stats_data.get('median_latency_sec', 0):.2f}s`\n")
-        f.write(f"- **P95 Latency:** `{stats_data.get('p95_latency_sec', 0):.2f}s`\n")
-        f.write(f"- **Throughput:** `{stats_data.get('images_per_min', 0):.1f} images/min`\n")
+
+def get_prompt_template():
+    prompt_path = Path(__file__).resolve().parent.parent / "vlm_annotation" / "prompts" / "annotation.txt"
+    with open(prompt_path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+def save_benchmark_summary(output_dir: Path, metrics: dict, stats_data: dict, model_name: str):
+    output_dir.mkdir(parents=True, exist_ok=True)
+    summary_path = output_dir / "benchmark_summary.md"
+    with open(summary_path, "w", encoding="utf-8") as f:
+        f.write(f"# VLM Speed & Throughput Benchmark Summary\n\n")
+        f.write(f"- **Evaluated Model:** `{model_name}`\n")
+        f.write(f"- **Total Benchmark Samples:** `{stats_data.get('total_processed', 0)}`\n")
+        f.write(f"- **Successful Annotations:** `{metrics.get('total_successful', 0)}`\n")
+        f.write(f"- **Failed Annotations:** `{metrics.get('total_failed', 0)}`\n")
+        f.write(f"- **Average Speed:** `{metrics.get('avg_speed_sec_per_img', 0):.2f} sec/image` (`{metrics.get('throughput_img_per_min', 0):.2f} images/min`)\n")
+        f.write(f"- **Total Benchmark Wall Time:** `{metrics.get('total_duration_sec', 0):.2f} seconds`\n")
         f.write(f"- **Estimated 20,000-Image Runtime:** `{stats_data.get('est_20k_hours', 0):.2f} hours`\n")
 
 
 async def main():
-    parser = argparse.ArgumentParser(description="Full Cotton Disease Dataset VLM Synthetic Annotation Pipeline.")
-    parser.add_argument("--dataset-dir", type=str, default="Cotton_dataset", help="Path to dataset root folder")
+    parser = argparse.ArgumentParser(description="Full Crop Disease Dataset VLM Synthetic Annotation Pipeline.")
+    parser.add_argument("--dataset-dir", type=str, default=config.dataset_dir, help="Path to dataset root folder")
     parser.add_argument("--output-dir", type=str, default=None, help="Path to outputs directory")
     parser.add_argument("--provider", type=str, default="gemini", help="VLM Provider (gemini, huggingface, hf, ollama, nvidia, groq, openrouter)")
     parser.add_argument("--model", type=str, default="gemini-flash-latest", help="Model ID or name")

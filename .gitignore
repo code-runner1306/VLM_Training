@@ -19,7 +19,7 @@ logs/
 
 # Raw dataset
 Cotton_dataset/
-
+Sugarcane/
 # LOCAL MODEL WEIGHTS & CHECKPOINTS (NEVER COMMIT TO GIT)
 /models/
 /checkpoints/

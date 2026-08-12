@@ -10,6 +10,7 @@ import numpy as np
 # Ensure root directory is in sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
+from config import config
 from training.src.dataset import validate_annotation, compute_image_hash
 
 try:
@@ -25,7 +26,7 @@ except ImportError:
 def parse_args():
     parser = argparse.ArgumentParser(description="Prepare, validate, filter, and split VLM dataset.")
     parser.add_argument("--annotations_file", type=str, default="outputs/annotations/annotations.jsonl", help="Input annotations JSONL file.")
-    parser.add_argument("--dataset_root", type=str, default="Cotton_dataset", help="Root directory containing raw images.")
+    parser.add_argument("--dataset_root", type=str, default=config.dataset_dir, help="Root directory containing raw images.")
     parser.add_argument("--output_dir", type=str, default="outputs/dataset", help="Output directory for manifests, stats, and plots.")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for splitting.")
     parser.add_argument("--train_ratio", type=float, default=0.80, help="Train set ratio.")

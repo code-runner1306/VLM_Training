@@ -95,7 +95,7 @@ def validate_annotation(item: Dict[str, Any], dataset_root: str) -> Tuple[bool, 
 
 
 DEFAULT_USER_PROMPT = (
-    "What disease is affecting this cotton plant?\n\n"
+    "What disease is affecting this crop plant?\n\n"
     "Analyze the image and explain your diagnosis based only on visible evidence."
 )
 
@@ -157,7 +157,7 @@ def format_vlm_conversation(
 
 
 class VLMDataset(Dataset):
-    """PyTorch Dataset for Cotton Disease VLM Fine-Tuning."""
+    """PyTorch Dataset for Crop Disease VLM Fine-Tuning."""
 
     def __init__(
         self,
