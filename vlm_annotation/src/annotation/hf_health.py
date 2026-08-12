@@ -29,9 +29,12 @@ def check_huggingface_environment_and_model(model_id: str = "Qwen/Qwen2.5-VL-7B-
     cuda_available = torch.cuda.is_available()
     device_str = torch.cuda.get_device_name(0) if cuda_available else "CPU (No CUDA GPU detected)"
 
-    # Test loading AutoProcessor to verify model ID reachability
+    # Test loading AutoProcessor to verify model ID reachability (checking local cache first)
     try:
-        processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True)
+        try:
+            processor = AutoProcessor.from_pretrained(model_id, local_files_only=True, trust_remote_code=True)
+        except Exception:
+            processor = AutoProcessor.from_pretrained(model_id, local_files_only=False, trust_remote_code=True)
     except Exception as e:
         return False, f"ERROR: Failed to load AutoProcessor for Hugging Face model '{model_id}': {e}"
 

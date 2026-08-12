@@ -4,6 +4,17 @@ import torch
 from training.src.model_adapters.base import BaseVLMAdapter
 
 
+def load_from_pretrained_with_cache_check(cls, model_id: str, **kwargs):
+    """
+    Attempt to load a model or processor directly from local Hugging Face cache first (local_files_only=True).
+    If the model is not found in local cache, fall back to downloading/loading from HF Hub (local_files_only=False).
+    """
+    try:
+        return cls.from_pretrained(model_id, local_files_only=True, **kwargs)
+    except Exception:
+        return cls.from_pretrained(model_id, local_files_only=False, **kwargs)
+
+
 class Qwen25VLAdapter(BaseVLMAdapter):
     """
     Adapter for Qwen2.5-VL models (3B & 7B variants).
@@ -26,7 +37,8 @@ class Qwen25VLAdapter(BaseVLMAdapter):
         min_pixels = self.config.get("image", {}).get("min_pixels", 256 * 28 * 28)
         max_pixels = self.config.get("image", {}).get("max_pixels", 1280 * 28 * 28)
 
-        processor = AutoProcessor.from_pretrained(
+        processor = load_from_pretrained_with_cache_check(
+            AutoProcessor,
             self.model_id,
             min_pixels=min_pixels,
             max_pixels=max_pixels,
@@ -42,7 +54,8 @@ class Qwen25VLAdapter(BaseVLMAdapter):
         if quantization_config is not None:
             model_kwargs["quantization_config"] = quantization_config
 
-        model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+        model = load_from_pretrained_with_cache_check(
+            Qwen2_5_VLForConditionalGeneration,
             self.model_id,
             **model_kwargs,
         )

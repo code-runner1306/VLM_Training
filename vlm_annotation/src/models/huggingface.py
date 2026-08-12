@@ -35,6 +35,17 @@ except ImportError:
 logger = logging.getLogger("HuggingFaceVisionModel")
 
 
+def load_from_pretrained_with_cache_check(cls, model_id: str, **kwargs):
+    """
+    Attempt to load a model or processor directly from local Hugging Face cache first (local_files_only=True).
+    If the model is not found in local cache, fall back to downloading/loading from HF Hub (local_files_only=False).
+    """
+    try:
+        return cls.from_pretrained(model_id, local_files_only=True, **kwargs)
+    except Exception:
+        return cls.from_pretrained(model_id, local_files_only=False, **kwargs)
+
+
 class HuggingFaceVisionModel(VisionModel):
     """
     Provider implementation for local Hugging Face Vision-Language Models.
@@ -68,12 +79,13 @@ class HuggingFaceVisionModel(VisionModel):
                 bnb_4bit_compute_dtype=self.torch_dtype,
             )
 
-        # Load Processor / Tokenizer
+        # Load Processor / Tokenizer (check local cache first)
         min_pixels = config.get("min_pixels", 200704)
         max_pixels = config.get("max_pixels", 602112)
 
         try:
-            self.processor = AutoProcessor.from_pretrained(
+            self.processor = load_from_pretrained_with_cache_check(
+                AutoProcessor,
                 self.model_id,
                 min_pixels=min_pixels,
                 max_pixels=max_pixels,
@@ -82,50 +94,86 @@ class HuggingFaceVisionModel(VisionModel):
             self.tokenizer = getattr(self.processor, "tokenizer", None)
         except Exception:
             try:
-                self.processor = AutoProcessor.from_pretrained(self.model_id, trust_remote_code=True)
+                self.processor = load_from_pretrained_with_cache_check(
+                    AutoProcessor,
+                    self.model_id,
+                    trust_remote_code=True,
+                )
                 self.tokenizer = getattr(self.processor, "tokenizer", None)
             except Exception:
                 self.processor = None
-                self.tokenizer = AutoTokenizer.from_pretrained(self.model_id, trust_remote_code=True)
+                self.tokenizer = load_from_pretrained_with_cache_check(
+                    AutoTokenizer,
+                    self.model_id,
+                    trust_remote_code=True,
+                )
 
-        # Load Model Class with robust fallback for Vision-Language Models
+        # Load Model Class with robust fallback for Vision-Language Models (check local cache first)
         self.model = None
 
         if Qwen3VLForConditionalGeneration is not None and "qwen3" in self.model_id.lower():
             try:
-                self.model = Qwen3VLForConditionalGeneration.from_pretrained(self.model_id, **model_kwargs)
+                self.model = load_from_pretrained_with_cache_check(
+                    Qwen3VLForConditionalGeneration,
+                    self.model_id,
+                    **model_kwargs,
+                )
             except Exception as e:
                 logger.warning(f"Qwen3VLForConditionalGeneration failed for {self.model_id}: {e}")
 
         if self.model is None and Qwen2_5_VLForConditionalGeneration is not None and ("qwen2.5" in self.model_id.lower() or "qwen2_5" in self.model_id.lower()):
             try:
-                self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(self.model_id, **model_kwargs)
+                self.model = load_from_pretrained_with_cache_check(
+                    Qwen2_5_VLForConditionalGeneration,
+                    self.model_id,
+                    **model_kwargs,
+                )
             except Exception as e:
                 logger.warning(f"Qwen2_5_VLForConditionalGeneration failed for {self.model_id}: {e}")
 
         if self.model is None and AutoModelForImageTextToText is not None:
             try:
-                self.model = AutoModelForImageTextToText.from_pretrained(self.model_id, **model_kwargs)
+                self.model = load_from_pretrained_with_cache_check(
+                    AutoModelForImageTextToText,
+                    self.model_id,
+                    **model_kwargs,
+                )
             except Exception as e:
                 logger.warning(f"AutoModelForImageTextToText failed for {self.model_id}: {e}")
 
         if self.model is None and AutoModelForVision2Seq is not None:
             try:
-                self.model = AutoModelForVision2Seq.from_pretrained(self.model_id, **model_kwargs)
+                self.model = load_from_pretrained_with_cache_check(
+                    AutoModelForVision2Seq,
+                    self.model_id,
+                    **model_kwargs,
+                )
             except Exception as e:
                 logger.warning(f"AutoModelForVision2Seq failed for {self.model_id}: {e}")
 
         if self.model is None and "internvl" in self.model_id.lower():
             try:
-                self.model = AutoModel.from_pretrained(self.model_id, **model_kwargs)
+                self.model = load_from_pretrained_with_cache_check(
+                    AutoModel,
+                    self.model_id,
+                    **model_kwargs,
+                )
             except Exception as e:
                 logger.warning(f"AutoModel failed for {self.model_id}: {e}")
 
         if self.model is None:
             try:
-                self.model = AutoModel.from_pretrained(self.model_id, **model_kwargs)
+                self.model = load_from_pretrained_with_cache_check(
+                    AutoModel,
+                    self.model_id,
+                    **model_kwargs,
+                )
             except Exception:
-                self.model = AutoModelForCausalLM.from_pretrained(self.model_id, **model_kwargs)
+                self.model = load_from_pretrained_with_cache_check(
+                    AutoModelForCausalLM,
+                    self.model_id,
+                    **model_kwargs,
+                )
 
     async def generate_annotation(
         self,
