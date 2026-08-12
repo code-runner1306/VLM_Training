@@ -65,7 +65,7 @@ class HuggingFaceVisionModel(VisionModel):
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_id, trust_remote_code=True)
 
         # Load Model Class
-        if Qwen2_5_VLForConditionalGeneration is not None and "qwen" in self.model_id.lower():
+        if Qwen2_5_VLForConditionalGeneration is not None and ("qwen2.5" in self.model_id.lower() or "qwen2_5" in self.model_id.lower()):
             try:
                 self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(self.model_id, **model_kwargs)
             except Exception:

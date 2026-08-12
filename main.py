@@ -183,8 +183,8 @@ def run_dataset_preparation_stage(annotation_path: Path, args, logger: logging.L
     ineligible_records = []
 
     for rec in raw_records:
-        ann = rec.get("parsed_annotation", {})
-        if validate_annotation(ann):
+        is_eligible, reason, _ = validate_annotation(rec, dataset_root)
+        if is_eligible:
             img_rel = rec.get("image_path") or rec.get("relative_path")
             img_abs = os.path.join(dataset_root, img_rel) if not os.path.isabs(img_rel) else img_rel
 
