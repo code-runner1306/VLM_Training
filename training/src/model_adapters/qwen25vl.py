@@ -67,7 +67,7 @@ class Qwen25VLAdapter(BaseVLMAdapter):
             "q_proj", "k_proj", "v_proj", "o_proj",
             "gate_proj", "up_proj", "down_proj"
         ]
-        projector_modules = ["merger"]
+        projector_modules = ["merger.mlp.0", "merger.mlp.2"]
         vision_modules = ["visual.blocks"]
 
         if strategy == "llm_only":
