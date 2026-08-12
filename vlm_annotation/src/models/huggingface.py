@@ -69,12 +69,24 @@ class HuggingFaceVisionModel(VisionModel):
             )
 
         # Load Processor / Tokenizer
+        min_pixels = config.get("min_pixels", 200704)
+        max_pixels = config.get("max_pixels", 602112)
+
         try:
-            self.processor = AutoProcessor.from_pretrained(self.model_id, trust_remote_code=True)
+            self.processor = AutoProcessor.from_pretrained(
+                self.model_id,
+                min_pixels=min_pixels,
+                max_pixels=max_pixels,
+                trust_remote_code=True,
+            )
             self.tokenizer = getattr(self.processor, "tokenizer", None)
         except Exception:
-            self.processor = None
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_id, trust_remote_code=True)
+            try:
+                self.processor = AutoProcessor.from_pretrained(self.model_id, trust_remote_code=True)
+                self.tokenizer = getattr(self.processor, "tokenizer", None)
+            except Exception:
+                self.processor = None
+                self.tokenizer = AutoTokenizer.from_pretrained(self.model_id, trust_remote_code=True)
 
         # Load Model Class with robust fallback for Vision-Language Models
         self.model = None
@@ -127,6 +139,9 @@ class HuggingFaceVisionModel(VisionModel):
 
         try:
             pil_img = Image.open(image_path).convert("RGB")
+            # Downscale high-resolution images to max 1280x1280 to prevent CUDA OOM on GPU
+            if pil_img.width > 1280 or pil_img.height > 1280:
+                pil_img.thumbnail((1280, 1280), Image.Resampling.LANCZOS)
 
             # Handling InternVL models vs Qwen models
             if "internvl" in self.model_id.lower() and hasattr(self.model, "chat"):
@@ -170,6 +185,9 @@ class HuggingFaceVisionModel(VisionModel):
 
                 with torch.no_grad():
                     generated_ids = self.model.generate(**inputs, max_new_tokens=1000)
+
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
 
                 if "input_ids" in inputs:
                     input_len = inputs["input_ids"].shape[1]
