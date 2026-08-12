@@ -18,6 +18,7 @@ def parse_args():
     parser.add_argument("--experiment", type=str, required=True, help="Experiment identifier name (e.g. qwen25vl-3b-v1).")
     parser.add_argument("--resume", action="store_true", help="Resume training from latest saved checkpoint.")
     parser.add_argument("--no_eval", action="store_true", help="Skip post-training automated evaluation.")
+    parser.add_argument("--smoke-test", action="store_true", help="Run fast verification training (1 epoch, minimal steps).")
     return parser.parse_args()
 
 
@@ -71,6 +72,7 @@ def main():
         train_manifest=train_manifest,
         val_manifest=val_manifest,
         resume=args.resume,
+        smoke_test=args.smoke_test,
     )
 
     # Update run metadata with timing/vram results

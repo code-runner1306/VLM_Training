@@ -36,6 +36,7 @@ def parse_args():
     parser.add_argument("--skip-training", action="store_true", default=config.skip_training, help="Skip VLM training after annotation generation.")
     parser.add_argument("--resume", action="store_true", default=config.resume, help="Resume interrupted annotation or training run.")
     parser.add_argument("--no-auto-push", action="store_true", default=not config.auto_push, help="Disable automatic git commit & push on run completion or error.")
+    parser.add_argument("--smoke-test", action="store_true", default=config.smoke_test, help="Run fast pipeline verification end-to-end with minimal samples and steps.")
     return parser.parse_args()
 
 
@@ -138,6 +139,8 @@ async def run_annotation_stage(args, logger: logging.Logger) -> Path:
     ]
     if args.resume:
         gen_args.append("--resume")
+    if args.smoke_test:
+        gen_args.append("--smoke-test")
     if args.num_annotation_samples is not None:
         gen_args.extend(["--num-samples", str(args.num_annotation_samples)])
 
@@ -310,6 +313,8 @@ def run_training_and_evaluation_stage(args, logger: logging.Logger):
         ]
         if args.resume:
             train_args.append("--resume")
+        if args.smoke_test:
+            train_args.append("--smoke-test")
 
         sys.argv = train_args
         train_main()
@@ -341,6 +346,12 @@ def run_comparison_stage(logger: logging.Logger):
 def main():
     args = parse_args()
 
+    if args.smoke_test:
+        if args.num_annotation_samples is None:
+            args.num_annotation_samples = 5
+        if args.experiment == config.experiment:
+            args.experiment = "smoke-test-run"
+
     timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     session_id = f"session_{args.experiment}_{timestamp_str}"
     logger, session_log_path = setup_logger(session_id)
@@ -369,12 +380,15 @@ def main():
     logger.info("=========================================================")
     logger.info("    END-TO-END VLM ANNOTATION & LORA TRAINING PIPELINE   ")
     logger.info("=========================================================")
+    if args.smoke_test:
+        logger.info(" 🔥 [SMOKE TEST MODE ENABLED - FAST VERIFICATION RUN]")
     logger.info(f"Session ID:            {session_id}")
     logger.info(f"Dataset Dir:           {args.dataset_dir}")
     logger.info(f"Annotation Provider:   {args.annotation_provider}")
     logger.info(f"Annotation Model:      {args.annotation_model}")
     logger.info(f"Train Config:          {args.train_config}")
     logger.info(f"Experiment ID:         {args.experiment}")
+    logger.info(f"Smoke Test Mode:       {args.smoke_test}")
     logger.info(f"Auto-Push to GitHub:   {not args.no_auto_push}")
     logger.info(f"Session Log File:      {session_log_path}")
     logger.info("=========================================================\n")

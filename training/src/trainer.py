@@ -101,11 +101,14 @@ def train_vlm(
     train_manifest: str,
     val_manifest: str,
     resume: bool = False,
+    smoke_test: bool = False,
 ) -> Dict[str, Any]:
     """
     Execute VLM QLoRA fine-tuning loop with CUDA OOM safety and checkpoint management.
     """
     print(f"\n--- Initializing Fine-Tuning Run: {experiment_name} ---")
+    if smoke_test:
+        print("[SMOKE TEST] Fast verification training mode enabled.")
     print(f"Model Key: {adapter.model_key} ({adapter.model_id})")
     print(f"Adaptation Strategy: {config.get('adaptation', {}).get('strategy')}")
 
@@ -152,7 +155,7 @@ def train_vlm(
     print_parameter_summary(param_counts)
 
     # 4. Prepare training state
-    num_epochs = config.get("training", {}).get("num_epochs", 3)
+    num_epochs = 1 if smoke_test else config.get("training", {}).get("num_epochs", 3)
     lr = float(config.get("training", {}).get("learning_rate", 2e-4))
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01)
 
@@ -163,7 +166,7 @@ def train_vlm(
         if torch.cuda.is_available():
             torch.cuda.reset_peak_memory_stats()
 
-        print("\nStarting fine-tuning training loop...")
+        print(f"\nStarting fine-tuning training loop ({num_epochs} epoch{'s' if num_epochs > 1 else ''})...")
         # Simulated fine-tuning execution step (or full Trainer wrapper)
         for epoch in range(1, num_epochs + 1):
             print(f"Epoch {epoch}/{num_epochs} running...")

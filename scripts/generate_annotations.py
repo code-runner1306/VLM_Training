@@ -83,7 +83,12 @@ async def main():
     parser.add_argument("--num-samples", type=int, default=None, help="Limit total number of images to annotate")
     parser.add_argument("--retry-failed", action="store_true", help="Re-process only items in failed.jsonl")
     parser.add_argument("--benchmark-speed", action="store_true", help="Run speed & throughput benchmark mode and estimate 20,000-image runtime")
+    parser.add_argument("--smoke-test", action="store_true", help="Run fast verification mode with 5 sample images")
     args = parser.parse_args()
+
+    if args.smoke_test and args.num_samples is None:
+        args.num_samples = 5
+        logger.info("[SMOKE TEST] Capping annotation generation to 5 sample images.")
 
     # Determine provider-isolated output directory
     timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")

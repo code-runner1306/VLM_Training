@@ -66,6 +66,7 @@ class PipelineConfig:
     # -------------------------------------------------------------------------
     # 4. Pipeline Execution & GitHub Remote Auto-Push Settings
     # -------------------------------------------------------------------------
+    smoke_test: bool = False  # Enable fast end-to-end pipeline smoke test with minimal sample sizes and steps
     skip_annotation: bool = False
     skip_training: bool = False
     auto_push: bool = True  # Automatically stage, commit, and push outputs to GitHub on completion or error
