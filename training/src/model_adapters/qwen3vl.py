@@ -38,15 +38,35 @@ class Qwen3VLAdapter(BaseVLMAdapter):
         if quantization_config is not None:
             model_kwargs["quantization_config"] = quantization_config
 
+        model = None
         try:
-            from transformers import Qwen2_5_VLForConditionalGeneration
-            model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+            from transformers import Qwen3VLForConditionalGeneration
+            model = Qwen3VLForConditionalGeneration.from_pretrained(
                 self.model_id, **model_kwargs
             )
         except Exception:
-            model = AutoModelForCausalLM.from_pretrained(
-                self.model_id, **model_kwargs
-            )
+            pass
+
+        if model is None:
+            try:
+                from transformers import AutoModelForImageTextToText
+                model = AutoModelForImageTextToText.from_pretrained(
+                    self.model_id, **model_kwargs
+                )
+            except Exception:
+                pass
+
+        if model is None:
+            try:
+                from transformers import Qwen2_5_VLForConditionalGeneration
+                model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+                    self.model_id, **model_kwargs
+                )
+            except Exception:
+                from transformers import AutoModelForCausalLM
+                model = AutoModelForCausalLM.from_pretrained(
+                    self.model_id, **model_kwargs
+                )
 
         return model, processor
 

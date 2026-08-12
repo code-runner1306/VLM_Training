@@ -13,9 +13,21 @@ except ImportError:
 try:
     from transformers import AutoProcessor, AutoModelForCausalLM, AutoModel, AutoTokenizer, BitsAndBytesConfig
     try:
+        from transformers import AutoModelForImageTextToText
+    except ImportError:
+        AutoModelForImageTextToText = None
+    try:
+        from transformers import AutoModelForVision2Seq
+    except ImportError:
+        AutoModelForVision2Seq = None
+    try:
         from transformers import Qwen2_5_VLForConditionalGeneration
     except ImportError:
         Qwen2_5_VLForConditionalGeneration = None
+    try:
+        from transformers import Qwen3VLForConditionalGeneration
+    except ImportError:
+        Qwen3VLForConditionalGeneration = None
     HAS_TRANSFORMERS = True
 except ImportError:
     HAS_TRANSFORMERS = False
@@ -64,19 +76,44 @@ class HuggingFaceVisionModel(VisionModel):
             self.processor = None
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_id, trust_remote_code=True)
 
-        # Load Model Class
-        if Qwen2_5_VLForConditionalGeneration is not None and ("qwen2.5" in self.model_id.lower() or "qwen2_5" in self.model_id.lower()):
+        # Load Model Class with robust fallback for Vision-Language Models
+        self.model = None
+
+        if Qwen3VLForConditionalGeneration is not None and "qwen3" in self.model_id.lower():
+            try:
+                self.model = Qwen3VLForConditionalGeneration.from_pretrained(self.model_id, **model_kwargs)
+            except Exception as e:
+                logger.warning(f"Qwen3VLForConditionalGeneration failed for {self.model_id}: {e}")
+
+        if self.model is None and Qwen2_5_VLForConditionalGeneration is not None and ("qwen2.5" in self.model_id.lower() or "qwen2_5" in self.model_id.lower()):
             try:
                 self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(self.model_id, **model_kwargs)
-            except Exception:
-                self.model = AutoModelForCausalLM.from_pretrained(self.model_id, **model_kwargs)
-        elif "internvl" in self.model_id.lower():
+            except Exception as e:
+                logger.warning(f"Qwen2_5_VLForConditionalGeneration failed for {self.model_id}: {e}")
+
+        if self.model is None and AutoModelForImageTextToText is not None:
+            try:
+                self.model = AutoModelForImageTextToText.from_pretrained(self.model_id, **model_kwargs)
+            except Exception as e:
+                logger.warning(f"AutoModelForImageTextToText failed for {self.model_id}: {e}")
+
+        if self.model is None and AutoModelForVision2Seq is not None:
+            try:
+                self.model = AutoModelForVision2Seq.from_pretrained(self.model_id, **model_kwargs)
+            except Exception as e:
+                logger.warning(f"AutoModelForVision2Seq failed for {self.model_id}: {e}")
+
+        if self.model is None and "internvl" in self.model_id.lower():
+            try:
+                self.model = AutoModel.from_pretrained(self.model_id, **model_kwargs)
+            except Exception as e:
+                logger.warning(f"AutoModel failed for {self.model_id}: {e}")
+
+        if self.model is None:
             try:
                 self.model = AutoModel.from_pretrained(self.model_id, **model_kwargs)
             except Exception:
                 self.model = AutoModelForCausalLM.from_pretrained(self.model_id, **model_kwargs)
-        else:
-            self.model = AutoModelForCausalLM.from_pretrained(self.model_id, **model_kwargs)
 
     async def generate_annotation(
         self,
