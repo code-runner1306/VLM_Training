@@ -11,10 +11,12 @@ PROHIBITED_HALLUCINATIONS = [
 
 
 class AnnotationValidator:
-    def __init__(self, schema_path: str = "vlm_annotation/config/annotation_schema.json"):
+    def __init__(self, schema_path: str = None):
+        if schema_path is None:
+            schema_path = "vlm_annotation/config/annotation_schema_sugarcane.json"
         sp = Path(schema_path)
         if not sp.exists():
-            sp = Path(__file__).resolve().parent.parent.parent / "config" / "annotation_schema.json"
+            sp = Path(__file__).resolve().parent.parent.parent / "config" / "annotation_schema_sugarcane.json"
         with open(sp, "r", encoding="utf-8") as f:
             self.schema = json.load(f)
 
@@ -38,11 +40,12 @@ class AnnotationValidator:
 
         # 3. Non-empty Observations Check
         obs = data.get("visible_observations", [])
-        evidence = data.get("diagnostic_evidence", [])
+        # Sugarcane schema uses visual_evidence; fall back to cotton diagnostic_evidence if present.
+        evidence = data.get("visual_evidence") or data.get("diagnostic_evidence", [])
         if not obs or len(obs) == 0:
             return False, "failed", "Empty visible_observations list."
         if not evidence or len(evidence) == 0:
-            return False, "failed", "Empty diagnostic_evidence list."
+            return False, "failed", "Empty evidence list (visual_evidence)."
 
         # 4. Hallucination Inspection
         text_content = json.dumps(data).lower()

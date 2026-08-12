@@ -22,3 +22,15 @@ models:
     rate_limit:
       requests_per_minute: 30
       max_concurrency: 5
+
+  - provider: ollama
+    name: ollama-qwen2.5vl-sugarcane
+    model: qwen2.5vl-sugarcane
+    enabled: true
+    base_url: http://localhost:11434/v1
+    num_ctx: 8192
+    max_dimension: 640
+    max_tokens: 2000
+    rate_limit:
+      requests_per_minute: 60
+      max_concurrency: 1

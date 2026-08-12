@@ -1,0 +1,132 @@
+You are an expert benchmark judge evaluating a synthetic VLM annotation of a SUGARCANE disease image.
+
+GROUND-TRUTH DISEASE CLASS:
+"{DISEASE_NAME}"
+
+CANDIDATE VLM ANNOTATION:
+{CANDIDATE_JSON}
+
+The candidate annotation was generated from a sugarcane image.
+
+Your primary task is to evaluate whether the annotation is VISUALLY GROUNDED and follows the Sugarcane Visual Annotation Specification.
+
+IMPORTANT:
+
+Do NOT reward the candidate merely because its observations are typical of "{DISEASE_NAME}".
+
+The ground-truth class is metadata.
+
+A candidate receives credit only when its claims are supported by the actual image.
+
+Evaluate the following dimensions:
+
+1. VISUAL OBSERVATION ACCURACY — 30 points
+
+Evaluate whether the candidate:
+
+* Describes features actually visible in the image
+* Correctly describes visible sugarcane plant organs
+* Accurately describes visible colors
+* Accurately describes visible shapes
+* Accurately describes visible textures
+* Accurately describes spatial distribution
+* Avoids generic or fabricated descriptions
+
+2. SUGARCANE MORPHOLOGY AWARENESS — 20 points
+
+Evaluate whether the candidate correctly identifies visible sugarcane structures such as:
+
+* Leaves
+* Leaf blade
+* Midrib
+* Parallel venation
+* Leaf margins
+* Leaf sheath
+* Stalk/stem
+* Nodes
+* Internodes
+* Internal stalk tissue when actually visible
+
+Do not penalize the candidate for omitting a structure that is not visible.
+
+3. VISUAL EVIDENCE QUALITY — 20 points
+
+Evaluate whether the annotation:
+
+* Uses specific image-grounded descriptions
+* Identifies where visible changes occur
+* Describes color differences clearly
+* Describes shape and spatial patterns when observable
+* Provides useful visual evidence rather than generic statements
+
+4. HALLUCINATION AND UNSUPPORTED CLAIMS — 20 points
+
+Give a high score when the annotation contains no unsupported claims.
+
+Penalize claims that:
+
+* Describe symptoms that are not visible
+* Assume disease-specific symptoms
+* Infer invisible internal tissue
+* Infer microscopic features
+* Infer pathogens
+* Infer causes
+* Infer environmental conditions
+* Infer treatment or management
+* Infer disease progression
+* Generalize a local observation to the entire plant
+* Invent lesion sizes without reliable scale
+* Claim a texture that cannot be visually determined
+* Claim a feature solely because it is typical of the ground-truth disease
+
+IMPORTANT:
+Explicit uncertainty should NOT be penalized when the image genuinely does not provide enough information.
+
+Unsupported certainty SHOULD be penalized.
+
+5. SCHEMA AND METADATA VALIDITY — 10 points
+
+Check whether:
+
+* The output is valid JSON
+* Required fields are present
+* Field types are appropriate
+* The "disease" field exactly matches "{DISEASE_NAME}"
+* No unnecessary conversational text is present
+
+DO NOT evaluate whether the candidate correctly diagnosed the disease.
+
+The disease label is already supplied as ground truth.
+
+Instead evaluate whether the visual evidence in the annotation is accurate and genuinely observable.
+
+SCORING:
+
+visual_observation_score: 0-30
+sugarcane_morphology_score: 0-20
+visual_evidence_score: 0-20
+hallucination_score: 0-20
+schema_score: 0-10
+
+total_score = sum of the five scores.
+
+HALLUCINATION DETECTION:
+
+Set "hallucination_detected" to true if the annotation contains at least one significant unsupported visual claim.
+
+Minor uncertainty or appropriately cautious wording is NOT hallucination.
+
+Return ONLY raw JSON.
+
+Required output:
+
+{
+"visual_observation_score": 0,
+"sugarcane_morphology_score": 0,
+"visual_evidence_score": 0,
+"hallucination_score": 0,
+"schema_score": 0,
+"total_score": 0,
+"hallucination_detected": false,
+"judge_feedback": "Detailed justification of the scores based on visual grounding, sugarcane morphology, unsupported claims, and schema validity."
+}

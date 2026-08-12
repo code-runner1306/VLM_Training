@@ -26,7 +26,7 @@ class BenchmarkEvaluator:
 
     def __init__(self, judge_model: Optional[VisionModel] = None):
         self.judge_model = judge_model
-        prompt_path = Path(__file__).resolve().parent.parent.parent / "prompts" / "benchmark.txt"
+        prompt_path = Path(__file__).resolve().parent.parent.parent / "prompts" / "sugarcane_prompt" / "benchmark.txt"
         if prompt_path.exists():
             with open(prompt_path, "r", encoding="utf-8") as f:
                 self.judge_prompt_template = f.read()

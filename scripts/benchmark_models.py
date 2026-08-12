@@ -32,7 +32,7 @@ def load_config():
 
 
 def load_annotation_prompt():
-    prompt_path = Path(__file__).resolve().parent.parent / "vlm_annotation" / "prompts" / "annotation.txt"
+    prompt_path = Path(__file__).resolve().parent.parent / "vlm_annotation" / "prompts" / "sugarcane_prompt" / "annotation.txt"
     with open(prompt_path, "r", encoding="utf-8") as f:
         return f.read()
 

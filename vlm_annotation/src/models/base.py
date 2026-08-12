@@ -5,6 +5,14 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
 
+class ModelMemoryError(Exception):
+    """Raised when the model runtime reports insufficient memory (OOM / KV-cache).
+
+    Memory errors are deterministic and will not resolve on retry, so they must
+    fail fast instead of entering a retry/backoff loop.
+    """
+
+
 @dataclass
 class ModelResponse:
     provider: str
@@ -18,6 +26,23 @@ class ModelResponse:
     completion_tokens: int = 0
     retry_count: int = 0
     rate_limit_hits: int = 0
+
+
+def _repair_json(text: str) -> Optional[Dict[str, Any]]:
+    """Attempt to repair common malformed JSON from smaller VLMs (bad escapes, missing commas)."""
+    repaired = text
+    # Repair invalid backslash escape sequences (e.g. Windows paths: "C:\Users" -> "C:\\Users").
+    # A backslash not followed by a valid JSON escape char gets doubled.
+    repaired = re.sub(r'\\(?![\\"/bfnrtu]|u[0-9a-fA-F]{4})', r'\\\\', repaired)
+    # Insert missing commas between object members. After a completed value (" } ]) a new
+    # key looks like  "some_key":  so we insert a comma before it. Safe: does not touch
+    # empty strings or array elements (they are not followed by a '":' key pattern).
+    repaired = re.sub(r'(?<=["}\]])(?=\s*"[^"\n]+"\s*:)', ',', repaired)
+    try:
+        return json.loads(repaired)
+    except Exception:
+        pass
+    return None
 
 
 def extract_json_from_text(text: str) -> Optional[Dict[str, Any]]:
@@ -40,7 +65,9 @@ def extract_json_from_text(text: str) -> Optional[Dict[str, Any]]:
         try:
             return json.loads(match.group(1))
         except Exception:
-            pass
+            repaired = _repair_json(match.group(1))
+            if repaired is not None:
+                return repaired
 
     # 4. Try greedy match for outer JSON object {...}
     match = re.search(r"(\{[\s\S]*\})", clean_text)
@@ -48,7 +75,14 @@ def extract_json_from_text(text: str) -> Optional[Dict[str, Any]]:
         try:
             return json.loads(match.group(1))
         except Exception:
-            pass
+            repaired = _repair_json(match.group(1))
+            if repaired is not None:
+                return repaired
+
+    # 5. Repair the whole cleaned text directly
+    repaired = _repair_json(clean_text)
+    if repaired is not None:
+        return repaired
 
     return None
 

@@ -1,0 +1,111 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SugarcaneDiseaseAnnotation",
+  "type": "object",
+  "required": [
+    "image_id",
+    "image_path",
+    "disease",
+    "visible_plant_organs",
+    "visible_observations",
+    "affected_regions",
+    "color_characteristics",
+    "shape_characteristics",
+    "texture_characteristics",
+    "spatial_distribution",
+    "visual_evidence",
+    "observation_summary",
+    "uncertain_observations",
+    "confidence"
+  ],
+  "properties": {
+    "image_id": {
+      "type": "string"
+    },
+    "image_path": {
+      "type": "string"
+    },
+    "disease": {
+      "type": "string"
+    },
+    "visible_plant_organs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "visible_observations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "affected_regions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "color_characteristics": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "shape_characteristics": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "texture_characteristics": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "spatial_distribution": {
+      "type": "string"
+    },
+    "visual_evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "observation_summary": {
+      "type": "string",
+      "minLength": 3
+    },
+    "uncertain_observations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "teacher_model": {
+      "type": "string"
+    },
+    "teacher_provider": {
+      "type": "string"
+    },
+    "prompt_version": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string"
+    },
+    "quality_status": {
+      "type": "string",
+      "enum": ["accepted", "needs_review", "failed"]
+    }
+  },
+  "additionalProperties": true
+}

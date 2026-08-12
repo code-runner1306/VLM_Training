@@ -7,7 +7,8 @@ import os
 import sys
 import time
 from pathlib import Path
-from dotenv import load_dotenv
+from typing import Any, Dict, Optional
+from urllib import parse
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -15,8 +16,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from vlm_annotation.src.annotation.checkpoint import CheckpointManager
 from vlm_annotation.src.annotation.retry import RateLimiter, execute_with_retry
 from vlm_annotation.src.annotation.validator import AnnotationValidator
-from vlm_annotation.src.dataset import discover_dataset
 from vlm_annotation.src.models.factory import create_vision_model
+
+# Comment prefix for JSON parse errors in annotations.jsonl
+COMMENT_PREFIX = "# VLM_PARSE_ERROR: "
 
 load_dotenv()
 logging.basicConfig(
@@ -37,7 +40,7 @@ def load_config():
 
 
 def load_annotation_prompt():
-    prompt_path = Path(__file__).resolve().parent.parent / "vlm_annotation" / "prompts" / "annotation.txt"
+    prompt_path = Path(__file__).resolve().parent.parent / "vlm_annotation" / "prompts" / "sugarcane_prompt" / "annotation.txt"
     with open(prompt_path, "r", encoding="utf-8") as f:
         return f.read()
 
@@ -129,6 +132,7 @@ async def main():
     completed_count = 0
     skipped_count = 0
     failed_count = 0
+    commented_count = 0
     total_latency_ms = 0.0
     start_time = time.monotonic()
 
@@ -186,6 +190,25 @@ async def main():
 
                 checkpoint_mgr.save_annotation(record)
                 completed_count += 1
+            elif response.status == "json_parse_error" or (
+                response.error_message and "parse" in response.error_message.lower()
+            ):
+                # Write "commented" line to annotations.jsonl for JSON parse errors
+                # so the pipeline can continue processing other images
+                commented_line = {
+                    "image_id": image_id,
+                    "image_path": relative_path,
+                    "disease": disease_name,
+                    "quality_status": "commented_error",
+                    "raw_response": response.raw_response if response.raw_response else "",
+                    "teacher_model": model.model_id,
+                    "teacher_provider": model.provider_name,
+                    "prompt_version": "1.0",
+                    "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                    "_comment": "JSON parse error - line commented out for pipeline continuity"
+                }
+                checkpoint_mgr.save_annotation(record)
+                commented_count += 1
             else:
                 failed_count += 1
                 fail_record = {
@@ -220,7 +243,7 @@ async def main():
 
         logger.info(
             f"Progress: [{idx}/{len(items)}] | Done: {completed_count} | Skipped: {skipped_count} | "
-            f"Failed: {failed_count} | RPM: {rpm:.1f} | Avg Lat: {avg_lat:.2f}s | "
+            f"Failed: {failed_count} | Commented: {commented_count} | RPM: {rpm:.1f} | Avg Lat: {avg_lat:.2f}s | "
             f"429 Hits: {model.rate_limit_hits} | ETA: {int(eta_sec//60)}m {int(eta_sec%60)}s"
         )
         sys.stdout.flush()

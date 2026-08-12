@@ -4,6 +4,8 @@ import random
 import time
 from typing import Any, Callable, Dict, Optional, TypeVar
 
+from vlm_annotation.src.models.base import ModelMemoryError
+
 logger = logging.getLogger("vlm_annotation.retry")
 
 T = TypeVar("T")
@@ -61,6 +63,17 @@ async def execute_with_retry(
             return result
         except Exception as exc:
             err_msg = str(exc).lower()
+
+            # Deterministic memory errors must fail fast, not retry.
+            if isinstance(exc, ModelMemoryError) or any(
+                kw in err_msg
+                for kw in ["requires more system memory", "out of memory", "not enough memory", "insufficient memory", "cuda out of memory", "allocation failed"]
+            ):
+                if model_instance:
+                    model_instance.failed_requests += 1
+                logger.error(f"Non-retryable memory error: {exc}")
+                raise exc
+
             is_rate_limit = "429" in err_msg or "rate limit" in err_msg or "too many requests" in err_msg or "quota" in err_msg
 
             if is_rate_limit and model_instance:

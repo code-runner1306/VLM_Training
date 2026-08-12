@@ -26,7 +26,7 @@ def load_model_configs():
 
 
 def get_profile_prompt_template():
-    prompt_path = Path(__file__).resolve().parent.parent / "vlm_annotation" / "prompts" / "disease_profile.txt"
+    prompt_path = Path(__file__).resolve().parent.parent / "vlm_annotation" / "prompts" / "sugarcane_prompt" / "disease_profile.txt"
     with open(prompt_path, "r", encoding="utf-8") as f:
         return f.read()
 
