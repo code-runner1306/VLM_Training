@@ -75,7 +75,7 @@ class PipelineConfig:
     train_ratio: float = 0.70
     val_ratio: float = 0.15
     test_ratio: float = 0.15
-
+    num_epochs: int = 100
     # -------------------------------------------------------------------------
     # 4. Pipeline Execution & GitHub Remote Auto-Push Settings
     # -------------------------------------------------------------------------
