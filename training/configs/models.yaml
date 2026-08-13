@@ -24,16 +24,30 @@ models:
       projector: ["merger"]
       vision: ["visual.blocks"]
 
-  internvl_8b:
-    name: "InternVL2.5-8B"
-    model_id: "OpenGVLab/InternVL2_5-8B"
+  internvl35:
+    name: "InternVL3.5-8B-Instruct"
+    model_id: "OpenGVLab/InternVL3_5-8B-Instruct"
     adapter_class: "InternVLAdapter"
     default_vram_profile: "32GB"
     default_adaptation_strategy: "llm_projector"
     target_modules:
-      llm: ["q_proj", "k_proj", "v_proj", "o_proj"]
+      llm: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
       projector: ["mlp1"]
       vision: ["vision_model"]
+
+  paligemma2:
+    name: "PaliGemma2-10B-PT-448"
+    model_id: "google/paligemma2-10b-pt-448"
+    adapter_class: "PaliGemmaAdapter"
+    default_vram_profile: "32GB"
+    default_adaptation_strategy: "llm_projector"
+    image_token_budget:
+      min_pixels: 448 * 448
+      max_pixels: 448 * 448
+    target_modules:
+      llm: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+      projector: ["multi_modal_projector"]
+      vision: ["vision_tower"]
 
   qwen25vl_3b:
     name: "Qwen2.5-VL-3B-Instruct"

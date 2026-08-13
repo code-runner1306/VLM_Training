@@ -37,19 +37,19 @@ class PipelineConfig:
     # -------------------------------------------------------------------------
     training_models: List[Dict[str, Any]] = field(default_factory=lambda: [
         {
-            "experiment": "scold-v1",
-            "train_config": "training/configs/scold.yaml",
-            "model_id": "SCOLD/SCOLD-Agricultural-Disease"
-        },
-        {
             "experiment": "qwen3vl-8b-v1",
             "train_config": "training/configs/qwen3vl.yaml",
             "model_id": "Qwen/Qwen3-VL-8B-Instruct"
         },
         {
-            "experiment": "internvl25-8b-v1",
-            "train_config": "training/configs/internvl_8b.yaml",
-            "model_id": "OpenGVLab/InternVL2_5-8B"
+            "experiment": "internvl35-v1",
+            "train_config": "training/configs/internvl35.yaml",
+            "model_id": "OpenGVLab/InternVL3_5-8B-Instruct"
+        },
+        {
+            "experiment": "paligemma2-10b-v1",
+            "train_config": "training/configs/paligemma2.yaml",
+            "model_id": "google/paligemma2-10b-pt-448"
         },
         {
             "experiment": "qwen25vl-3b-v1",
@@ -57,6 +57,14 @@ class PipelineConfig:
             "model_id": "Qwen/Qwen2.5-VL-3B-Instruct"
         }
     ])
+
+    # Separate classification model execution (dual-encoder architecture)
+    scold_model: Dict[str, Any] = field(default_factory=lambda: {
+        "experiment": "scold-v1",
+        "train_config": "training/configs/scold.yaml",
+        "model_id": "SCOLD/SCOLD-Agricultural-Disease",
+        "enabled": True
+    })
 
     delete_cache_after_train: bool = True  # Automatically delete downloaded base model weights from HF cache after training to save disk space
 

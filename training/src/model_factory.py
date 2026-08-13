@@ -6,6 +6,7 @@ from training.src.model_adapters.qwen25vl import Qwen25VLAdapter
 from training.src.model_adapters.qwen3vl import Qwen3VLAdapter
 from training.src.model_adapters.scold import SCOLDAdapter
 from training.src.model_adapters.internvl import InternVLAdapter
+from training.src.model_adapters.paligemma import PaliGemmaAdapter
 
 
 class ModelFactory:
@@ -18,6 +19,7 @@ class ModelFactory:
         "Qwen3VLAdapter": Qwen3VLAdapter,
         "SCOLDAdapter": SCOLDAdapter,
         "InternVLAdapter": InternVLAdapter,
+        "PaliGemmaAdapter": PaliGemmaAdapter,
     }
 
     @classmethod

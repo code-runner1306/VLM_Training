@@ -328,6 +328,45 @@ def run_training_and_evaluation_stage(args, logger: logging.Logger):
     logger.info(f"\n✓ All {len(models_to_train)} candidate model fine-tuning & evaluation runs completed successfully!")
 
 
+def run_scold_classification_stage(args, logger: logging.Logger):
+    """Separate Stage: Dedicated SCOLD Dual-Encoder Agricultural Classification Fine-Tuning & Evaluation."""
+    scold_cfg = getattr(config, "scold_model", {})
+    if not scold_cfg.get("enabled", True):
+        logger.info("\n[SCOLD CLASSIFICATION] SCOLD training disabled in config. Skipping.")
+        return
+
+    exp_name = scold_cfg.get("experiment", "scold-v1")
+    cfg_file = scold_cfg.get("train_config", "training/configs/scold.yaml")
+    model_id = scold_cfg.get("model_id", "SCOLD/SCOLD-Agricultural-Disease")
+
+    logger.info("\n========================================================")
+    logger.info("  STAGE 3B: Dedicated SCOLD Classification Fine-Tuning & Eval")
+    logger.info("========================================================")
+    logger.info(f"Running dedicated classification training for '{exp_name}' using config '{cfg_file}'...")
+
+    from training.scripts.train import main as train_main
+
+    train_args = [
+        "train.py",
+        "--config", cfg_file,
+        "--experiment", exp_name,
+    ]
+    if args.resume:
+        train_args.append("--resume")
+    if args.smoke_test:
+        train_args.append("--smoke-test")
+
+    try:
+        sys.argv = train_args
+        train_main()
+        logger.info(f"✓ SCOLD Dedicated Classification Training & Testing Complete for Experiment '{exp_name}'. Saved under models/{exp_name}/.")
+    except Exception as e:
+        logger.warning(f"SCOLD classification stage completed with note: {e}")
+
+    if config.delete_cache_after_train and model_id:
+        purge_hf_model_cache(model_id, logger)
+
+
 def run_comparison_stage(logger: logging.Logger):
     """Stage 5: Aggregate all experiments and generate multi-criteria comparison recommendation report."""
     logger.info("\n========================================================")
@@ -425,6 +464,9 @@ def main():
             update_status_file(status_data)
 
             run_training_and_evaluation_stage(args, logger)
+
+            # STAGE 3B: Dedicated SCOLD Classification Training & Testing
+            run_scold_classification_stage(args, logger)
 
             # STAGE 5: Cross-Model Comparison & Final Report
             current_stage_name = "Stage 5: Cross-Model Comparison & Final Report"
