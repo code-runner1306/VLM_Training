@@ -87,7 +87,7 @@ def main():
 
     # Stage files
     print("\nStaging code, configs, logs, and outputs/...")
-    run_cmd(["git", "add", "main.py", "config.py", "vlm_annotation/", "scripts/", "training/", "outputs/", "logs/", "tests/", "README.md", ".gitignore", "requirements.txt", "pyproject.toml", "openspec/"])
+    run_cmd(["git", "add", "main.py", "config.py", "vlm_annotation/", "scripts/", "training/", "outputs/", "logs/", "tests/", "README.md", ".gitignore", "requirements.txt", "pyproject.toml", "openspec/", "run_sequential_datasets.sh", "run_sequential_datasets.ps1"])
 
     code, git_status_out = run_cmd(["git", "status", "--short"])
     print("Files ready to be committed:")
