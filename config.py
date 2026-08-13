@@ -75,9 +75,22 @@ class PipelineConfig:
     train_ratio: float = 0.70
     val_ratio: float = 0.15
     test_ratio: float = 0.15
+    num_epoches: int = 5
 
     # -------------------------------------------------------------------------
-    # 4. Pipeline Execution & GitHub Remote Auto-Push Settings
+    # 4. Early Stopping Settings (Configurable centrally here or in YAML files)
+    # -------------------------------------------------------------------------
+    early_stopping_enabled: bool = True
+    early_stopping_monitor: str = "val_loss"  # Options: val_loss, val_macro_f1, val_accuracy, loss
+    early_stopping_mode: str = "min"          # Options: min, max, auto
+    early_stopping_patience: int = 2          # Number of evaluations with no improvement before stopping
+    early_stopping_min_delta: float = 0.001   # Minimum change to qualify as an improvement
+    early_stopping_restore_best_weights: bool = True  # Restore weights from best checkpoint upon stop
+    early_stopping_stopping_threshold: Optional[float] = None  # Milestone threshold to halt training early
+    early_stopping_divergence_threshold: Optional[float] = 50.0  # Divergence threshold to prevent runaway loss
+
+    # -------------------------------------------------------------------------
+    # 5. Pipeline Execution & GitHub Remote Auto-Push Settings
     # -------------------------------------------------------------------------
     smoke_test: bool = False  # Enable fast end-to-end pipeline smoke test with minimal sample sizes and steps
     skip_annotation: bool = False

@@ -37,6 +37,9 @@ def parse_args():
     parser.add_argument("--resume", action="store_true", default=config.resume, help="Resume interrupted annotation or training run.")
     parser.add_argument("--no-auto-push", action="store_true", default=not config.auto_push, help="Disable automatic git commit & push on run completion or error.")
     parser.add_argument("--smoke-test", action="store_true", default=config.smoke_test, help="Run fast pipeline verification end-to-end with minimal samples and steps.")
+    parser.add_argument("--patience", type=int, default=None, help="Early stopping patience (number of evaluations before stopping).")
+    parser.add_argument("--early-stopping-monitor", type=str, default=None, help="Metric to monitor for early stopping (e.g. val_loss).")
+    parser.add_argument("--no-early-stopping", action="store_true", default=False, help="Disable early stopping during training.")
     return parser.parse_args()
 
 
@@ -315,6 +318,12 @@ def run_training_and_evaluation_stage(args, logger: logging.Logger):
             train_args.append("--resume")
         if args.smoke_test:
             train_args.append("--smoke-test")
+        if args.patience is not None:
+            train_args.extend(["--patience", str(args.patience)])
+        if args.early_stopping_monitor is not None:
+            train_args.extend(["--early-stopping-monitor", args.early_stopping_monitor])
+        if args.no_early_stopping:
+            train_args.append("--no-early-stopping")
 
         sys.argv = train_args
         train_main()
@@ -355,6 +364,12 @@ def run_scold_classification_stage(args, logger: logging.Logger):
         train_args.append("--resume")
     if args.smoke_test:
         train_args.append("--smoke-test")
+    if args.patience is not None:
+        train_args.extend(["--patience", str(args.patience)])
+    if args.early_stopping_monitor is not None:
+        train_args.extend(["--early-stopping-monitor", args.early_stopping_monitor])
+    if args.no_early_stopping:
+        train_args.append("--no-early-stopping")
 
     try:
         sys.argv = train_args

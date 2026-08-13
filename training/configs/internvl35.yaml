@@ -29,7 +29,7 @@ training:
   learning_rate: 1.5e-4
   warmup_ratio: 0.03
   lr_scheduler_type: "cosine"
-  num_epochs: 3
+  num_epochs: 5
   weight_decay: 0.01
   gradient_checkpointing: true
   fp16: false
@@ -38,6 +38,16 @@ training:
   eval_steps: 50
   save_steps: 50
   max_grad_norm: 1.0
+
+early_stopping:
+  enabled: true
+  monitor: "val_loss"
+  mode: "min"
+  patience: 2
+  min_delta: 0.001
+  restore_best_weights: true
+  stopping_threshold: null
+  divergence_threshold: 50.0
 
 checkpoint:
   output_dir: "checkpoints/internvl35"

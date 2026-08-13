@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 try:
     import matplotlib
@@ -113,17 +113,56 @@ def plot_per_class_bar_charts(per_class_metrics: Dict[str, Any], output_dir: str
     plt.close()
 
 
-def plot_training_curves(history: Dict[str, List[float]], output_dir: str):
+def plot_training_curves(
+    history: Dict[str, List[float]],
+    output_dir: str,
+    best_epoch: Optional[int] = None,
+    stopped_epoch: Optional[int] = None,
+):
+    """
+    Plot training/validation curves with best checkpoint and early stopping annotations.
+    """
     if not HAS_PLOTTING:
         return
 
     os.makedirs(output_dir, exist_ok=True)
 
-    # 1. Training Loss
-    if "train_loss" in history and history["train_loss"]:
+    has_train = "train_loss" in history and len(history["train_loss"]) > 0
+    has_val = "val_loss" in history and len(history["val_loss"]) > 0
+
+    # 1. Combined Train & Validation Loss Curve
+    if has_train or has_val:
+        plt.figure(figsize=(9, 5))
+        epochs_train = list(range(1, len(history.get("train_loss", [])) + 1))
+        epochs_val = list(range(1, len(history.get("val_loss", [])) + 1))
+
+        if has_train:
+            plt.plot(epochs_train, history["train_loss"], label="Train Loss", color="#c0392b", marker="o", linewidth=2)
+        if has_val:
+            plt.plot(epochs_val, history["val_loss"], label="Val Loss", color="#2980b9", marker="s", linewidth=2)
+
+        # Draw best epoch line
+        if best_epoch is not None:
+            plt.axvline(x=best_epoch, color="#27ae60", linestyle="--", linewidth=1.8, label=f"Best Epoch ({best_epoch})")
+
+        # Draw early stopping trigger line
+        if stopped_epoch is not None:
+            plt.axvline(x=stopped_epoch, color="#e67e22", linestyle=":", linewidth=2, label=f"Early Stopped ({stopped_epoch})")
+
+        plt.xlabel("Epoch")
+        plt.ylabel("Loss")
+        plt.title("Training & Validation Loss Curves with Early Stopping")
+        plt.grid(True, linestyle="--", alpha=0.6)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(os.path.join(output_dir, "loss_curves.png"), dpi=200)
+        plt.close()
+
+    # 2. Individual Training Loss
+    if has_train:
         plt.figure(figsize=(8, 5))
         plt.plot(history["train_loss"], label="Train Loss", color="#c0392b", linewidth=2)
-        plt.xlabel("Step / Epoch")
+        plt.xlabel("Epoch / Step")
         plt.ylabel("Loss")
         plt.title("Training Loss Curve")
         plt.grid(True)
@@ -132,11 +171,13 @@ def plot_training_curves(history: Dict[str, List[float]], output_dir: str):
         plt.savefig(os.path.join(output_dir, "training_loss.png"), dpi=200)
         plt.close()
 
-    # 2. Validation Loss
-    if "val_loss" in history and history["val_loss"]:
+    # 3. Individual Validation Loss
+    if has_val:
         plt.figure(figsize=(8, 5))
         plt.plot(history["val_loss"], label="Val Loss", color="#2980b9", linewidth=2)
-        plt.xlabel("Step / Epoch")
+        if best_epoch is not None:
+            plt.axvline(x=best_epoch - 1, color="#27ae60", linestyle="--", label=f"Best Epoch ({best_epoch})")
+        plt.xlabel("Epoch")
         plt.ylabel("Loss")
         plt.title("Validation Loss Curve")
         plt.grid(True)
@@ -145,7 +186,7 @@ def plot_training_curves(history: Dict[str, List[float]], output_dir: str):
         plt.savefig(os.path.join(output_dir, "validation_loss.png"), dpi=200)
         plt.close()
 
-    # 3. Learning Rate
+    # 4. Learning Rate Schedule
     if "learning_rate" in history and history["learning_rate"]:
         plt.figure(figsize=(8, 5))
         plt.plot(history["learning_rate"], label="Learning Rate", color="#f39c12", linewidth=2)

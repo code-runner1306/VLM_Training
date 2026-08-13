@@ -32,6 +32,16 @@ training:
   save_steps: 50
   max_grad_norm: 1.0
 
+early_stopping:
+  enabled: true
+  monitor: "val_loss"
+  mode: "min"
+  patience: 2
+  min_delta: 0.001
+  restore_best_weights: true
+  stopping_threshold: null
+  divergence_threshold: 50.0
+
 checkpoint:
   output_dir: "checkpoints/scold"
   save_total_limit: 3
