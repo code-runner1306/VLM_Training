@@ -72,9 +72,9 @@ class PipelineConfig:
     experiment: str = "qwen25vl-3b-v1"
 
     seed: int = 42
-    train_ratio: float = 0.80
-    val_ratio: float = 0.10
-    test_ratio: float = 0.10
+    train_ratio: float = 0.70
+    val_ratio: float = 0.15
+    test_ratio: float = 0.15
 
     # -------------------------------------------------------------------------
     # 4. Pipeline Execution & GitHub Remote Auto-Push Settings

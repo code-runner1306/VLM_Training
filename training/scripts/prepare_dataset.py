@@ -28,9 +28,9 @@ def parse_args():
     parser.add_argument("--dataset_root", type=str, default="Cotton_dataset", help="Root directory containing raw images.")
     parser.add_argument("--output_dir", type=str, default="outputs/dataset", help="Output directory for manifests, stats, and plots.")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for splitting.")
-    parser.add_argument("--train_ratio", type=float, default=0.80, help="Train set ratio.")
-    parser.add_argument("--val_ratio", type=float, default=0.10, help="Validation set ratio.")
-    parser.add_argument("--test_ratio", type=float, default=0.10, help="Test set ratio.")
+    parser.add_argument("--train_ratio", type=float, default=0.70, help="Train set ratio.")
+    parser.add_argument("--val_ratio", type=float, default=0.15, help="Validation set ratio.")
+    parser.add_argument("--test_ratio", type=float, default=0.15, help="Test set ratio.")
     return parser.parse_args()
 
 

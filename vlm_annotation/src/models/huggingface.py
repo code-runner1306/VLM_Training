@@ -80,33 +80,20 @@ class HuggingFaceVisionModel(VisionModel):
             )
 
         # Load Processor / Tokenizer (check local cache first)
-        min_pixels = config.get("min_pixels", 200704)
-        max_pixels = config.get("max_pixels", 602112)
-
         try:
             self.processor = load_from_pretrained_with_cache_check(
                 AutoProcessor,
                 self.model_id,
-                min_pixels=min_pixels,
-                max_pixels=max_pixels,
                 trust_remote_code=True,
             )
             self.tokenizer = getattr(self.processor, "tokenizer", None)
         except Exception:
-            try:
-                self.processor = load_from_pretrained_with_cache_check(
-                    AutoProcessor,
-                    self.model_id,
-                    trust_remote_code=True,
-                )
-                self.tokenizer = getattr(self.processor, "tokenizer", None)
-            except Exception:
-                self.processor = None
-                self.tokenizer = load_from_pretrained_with_cache_check(
-                    AutoTokenizer,
-                    self.model_id,
-                    trust_remote_code=True,
-                )
+            self.processor = None
+            self.tokenizer = load_from_pretrained_with_cache_check(
+                AutoTokenizer,
+                self.model_id,
+                trust_remote_code=True,
+            )
 
         # Load Model Class with robust fallback for Vision-Language Models (check local cache first)
         self.model = None
