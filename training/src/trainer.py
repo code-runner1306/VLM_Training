@@ -112,8 +112,15 @@ def train_vlm(
     print(f"\n--- Initializing Fine-Tuning Run: {experiment_name} ---")
     if smoke_test:
         print("[SMOKE TEST] Fast verification training mode enabled.")
-    print(f"Model Key: {adapter.model_key} ({adapter.model_id})")
-    print(f"Adaptation Strategy: {config.get('adaptation', {}).get('strategy')}")
+    # 0. Reserve CUDA Memory Overhead
+    cuda_mem_fraction = config.get("training", {}).get("cuda_memory_fraction", 30 / 32)
+    if torch.cuda.is_available():
+        try:
+            device_idx = torch.cuda.current_device()
+            torch.cuda.set_per_process_memory_fraction(float(cuda_mem_fraction), device=device_idx)
+            print(f"[CUDA MEMORY] Set per-process memory fraction to {float(cuda_mem_fraction):.4f} (~{float(cuda_mem_fraction)*100:.1f}%) on device {device_idx}")
+        except Exception as e:
+            print(f"[CUDA MEMORY] Note: Could not set memory fraction: {e}")
 
     ckpt_dir = config.get("checkpoint", {}).get("output_dir", f"checkpoints/{experiment_name}")
     ckpt_manager = CheckpointManager(ckpt_dir)

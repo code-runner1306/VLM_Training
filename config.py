@@ -75,7 +75,8 @@ class PipelineConfig:
     train_ratio: float = 0.70
     val_ratio: float = 0.15
     test_ratio: float = 0.15
-    num_epoches: int = 5
+    num_epochs: int = 5
+    cuda_memory_fraction: float = 30 / 32  # Reserve VRAM headroom (~93.75%) for system/driver overhead
 
     # -------------------------------------------------------------------------
     # 4. Early Stopping Settings (Configurable centrally here or in YAML files)

@@ -68,6 +68,12 @@ def main():
     if args.early_stopping_monitor is not None:
         config["early_stopping"]["monitor"] = args.early_stopping_monitor
 
+    if "training" not in config:
+        config["training"] = {}
+    if pipeline_cfg is not None and hasattr(pipeline_cfg, "cuda_memory_fraction"):
+        if "cuda_memory_fraction" not in config["training"]:
+            config["training"]["cuda_memory_fraction"] = pipeline_cfg.cuda_memory_fraction
+
     model_key = config.get("model", {}).get("key", "qwen25vl_3b")
     adapter = ModelFactory.get_adapter(model_key, config)
 
