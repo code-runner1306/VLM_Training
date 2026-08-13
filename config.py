@@ -37,19 +37,24 @@ class PipelineConfig:
     # -------------------------------------------------------------------------
     training_models: List[Dict[str, Any]] = field(default_factory=lambda: [
         {
-            "experiment": "qwen25vl-3b-v1",
-            "train_config": "training/configs/qwen25vl_3b.yaml",
-            "model_id": "Qwen/Qwen2.5-VL-3B-Instruct"
-        },
-        {
-            "experiment": "qwen25vl-7b-v1",
-            "train_config": "training/configs/qwen25vl_7b.yaml",
-            "model_id": "Qwen/Qwen2.5-VL-7B-Instruct"
+            "experiment": "scold-v1",
+            "train_config": "training/configs/scold.yaml",
+            "model_id": "SCOLD/SCOLD-Agricultural-Disease"
         },
         {
             "experiment": "qwen3vl-8b-v1",
             "train_config": "training/configs/qwen3vl.yaml",
             "model_id": "Qwen/Qwen3-VL-8B-Instruct"
+        },
+        {
+            "experiment": "internvl25-8b-v1",
+            "train_config": "training/configs/internvl_8b.yaml",
+            "model_id": "OpenGVLab/InternVL2_5-8B"
+        },
+        {
+            "experiment": "qwen25vl-3b-v1",
+            "train_config": "training/configs/qwen25vl_3b.yaml",
+            "model_id": "Qwen/Qwen2.5-VL-3B-Instruct"
         }
     ])
 

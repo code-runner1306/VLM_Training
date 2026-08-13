@@ -1,63 +1,33 @@
 # Registry of supported VLM architectures and defaults
 
 models:
-  qwen25vl_3b:
-    name: "Qwen2.5-VL-3B-Instruct"
-    model_id: "Qwen/Qwen2.5-VL-3B-Instruct"
-    adapter_class: "Qwen25VLAdapter"
-    default_vram_profile: "8GB"
-    default_adaptation_strategy: "llm_projector"
-    image_token_budget:
-      min_pixels: 256 * 28 * 28
-      max_pixels: 1280 * 28 * 28
+  scold:
+    name: "SCOLD Agricultural Encoder"
+    model_id: "SCOLD/SCOLD-Agricultural-Disease"
+    adapter_class: "SCOLDAdapter"
+    default_vram_profile: "4GB"
+    default_adaptation_strategy: "full_multimodal"
     target_modules:
-      llm: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
-      projector: ["merger"]
-      vision: ["visual.blocks"]
-
-  qwen25vl_7b:
-    name: "Qwen2.5-VL-7B-Instruct"
-    model_id: "Qwen/Qwen2.5-VL-7B-Instruct"
-    adapter_class: "Qwen25VLAdapter"
-    default_vram_profile: "24GB"
-    default_adaptation_strategy: "llm_projector"
-    image_token_budget:
-      min_pixels: 256 * 28 * 28
-      max_pixels: 1280 * 28 * 28
-    target_modules:
-      llm: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
-      projector: ["merger"]
-      vision: ["visual.blocks"]
+      vision: ["visual.encoder", "projection_head"]
 
   qwen3vl:
     name: "Qwen3-VL 8B-class"
-    model_id: "Qwen/Qwen2.5-VL-7B-Instruct" # Placeholder until official Qwen3-VL hub id released
+    model_id: "Qwen/Qwen3-VL-8B-Instruct"
     adapter_class: "Qwen3VLAdapter"
     default_vram_profile: "32GB"
     default_adaptation_strategy: "full_multimodal"
     image_token_budget:
-      min_pixels: 256 * 28 * 28
-      max_pixels: 1600 * 28 * 28
+      min_pixels: 200704
+      max_pixels: 1254400
     target_modules:
       llm: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
       projector: ["merger"]
       vision: ["visual.blocks"]
 
-  llava_onevision_7b:
-    name: "LLaVA-OneVision-7B"
-    model_id: "lmms-lab/llava-onevision-qwen2-7b-ov"
-    adapter_class: "BaseVLMAdapter"
-    default_vram_profile: "24GB"
-    default_adaptation_strategy: "llm_projector"
-    target_modules:
-      llm: ["q_proj", "k_proj", "v_proj", "o_proj"]
-      projector: ["multi_modal_projector"]
-      vision: ["vision_tower"]
-
   internvl_8b:
-    name: "InternVL2-8B"
-    model_id: "OpenGVLab/InternVL2-8B"
-    adapter_class: "BaseVLMAdapter"
+    name: "InternVL2.5-8B"
+    model_id: "OpenGVLab/InternVL2_5-8B"
+    adapter_class: "InternVLAdapter"
     default_vram_profile: "32GB"
     default_adaptation_strategy: "llm_projector"
     target_modules:
@@ -65,13 +35,16 @@ models:
       projector: ["mlp1"]
       vision: ["vision_model"]
 
-  smolvlm2:
-    name: "SmolVLM2-2.2B"
-    model_id: "HuggingFaceTB/SmolVLM2-2.2B-Instruct"
-    adapter_class: "BaseVLMAdapter"
+  qwen25vl_3b:
+    name: "Qwen2.5-VL-3B-Instruct"
+    model_id: "Qwen/Qwen2.5-VL-3B-Instruct"
+    adapter_class: "Qwen25VLAdapter"
     default_vram_profile: "8GB"
     default_adaptation_strategy: "llm_projector"
+    image_token_budget:
+      min_pixels: 200704
+      max_pixels: 1003520
     target_modules:
-      llm: ["q_proj", "k_proj", "v_proj", "o_proj"]
-      projector: ["connector"]
-      vision: ["vision_model"]
+      llm: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+      projector: ["merger"]
+      vision: ["visual.blocks"]

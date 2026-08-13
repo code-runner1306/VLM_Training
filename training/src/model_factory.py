@@ -4,6 +4,8 @@ from typing import Dict, Any, Type
 from training.src.model_adapters.base import BaseVLMAdapter
 from training.src.model_adapters.qwen25vl import Qwen25VLAdapter
 from training.src.model_adapters.qwen3vl import Qwen3VLAdapter
+from training.src.model_adapters.scold import SCOLDAdapter
+from training.src.model_adapters.internvl import InternVLAdapter
 
 
 class ModelFactory:
@@ -14,6 +16,8 @@ class ModelFactory:
     _ADAPTER_REGISTRY: Dict[str, Type[BaseVLMAdapter]] = {
         "Qwen25VLAdapter": Qwen25VLAdapter,
         "Qwen3VLAdapter": Qwen3VLAdapter,
+        "SCOLDAdapter": SCOLDAdapter,
+        "InternVLAdapter": InternVLAdapter,
     }
 
     @classmethod
