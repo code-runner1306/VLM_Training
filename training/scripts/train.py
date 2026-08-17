@@ -7,18 +7,26 @@ import argparse
 # Ensure root directory is in sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
+try:
+    from config import config as pipeline_cfg
+except ImportError:
+    pipeline_cfg = None
+
 from training.src.model_factory import ModelFactory
 from training.src.trainer import train_vlm
 from training.scripts.evaluate import run_evaluation
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Train Vision-Language Model with QLoRA.")
+    parser = argparse.ArgumentParser(description="Train Vision-Language Model with QLoRA and Early Stopping.")
     parser.add_argument("--config", type=str, required=True, help="Path to YAML training configuration file.")
     parser.add_argument("--experiment", type=str, required=True, help="Experiment identifier name (e.g. qwen25vl-3b-v1).")
     parser.add_argument("--resume", action="store_true", help="Resume training from latest saved checkpoint.")
     parser.add_argument("--no_eval", action="store_true", help="Skip post-training automated evaluation.")
     parser.add_argument("--smoke-test", action="store_true", help="Run fast verification training (1 epoch, minimal steps).")
+    parser.add_argument("--patience", type=int, default=None, help="Override early stopping patience.")
+    parser.add_argument("--early-stopping-monitor", type=str, default=None, help="Override early stopping monitor metric (e.g. val_loss).")
+    parser.add_argument("--no-early-stopping", action="store_true", help="Disable early stopping.")
     return parser.parse_args()
 
 
@@ -33,6 +41,39 @@ def main():
     with open(config_path, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
+    # 1. Initialize early stopping configuration from config.py defaults, YAML, and CLI overrides
+    if "early_stopping" not in config:
+        config["early_stopping"] = {}
+
+    if pipeline_cfg is not None:
+        cfg_mappings = [
+            ("enabled", "early_stopping_enabled"),
+            ("monitor", "early_stopping_monitor"),
+            ("mode", "early_stopping_mode"),
+            ("patience", "early_stopping_patience"),
+            ("min_delta", "early_stopping_min_delta"),
+            ("restore_best_weights", "early_stopping_restore_best_weights"),
+            ("stopping_threshold", "early_stopping_stopping_threshold"),
+            ("divergence_threshold", "early_stopping_divergence_threshold"),
+        ]
+        for key, attr in cfg_mappings:
+            if key not in config["early_stopping"] and hasattr(pipeline_cfg, attr):
+                config["early_stopping"][key] = getattr(pipeline_cfg, attr)
+
+    # Apply CLI early stopping overrides if explicitly supplied
+    if args.no_early_stopping:
+        config["early_stopping"]["enabled"] = False
+    if args.patience is not None:
+        config["early_stopping"]["patience"] = args.patience
+    if args.early_stopping_monitor is not None:
+        config["early_stopping"]["monitor"] = args.early_stopping_monitor
+
+    if "training" not in config:
+        config["training"] = {}
+    if pipeline_cfg is not None and hasattr(pipeline_cfg, "cuda_memory_fraction"):
+        if "cuda_memory_fraction" not in config["training"]:
+            config["training"]["cuda_memory_fraction"] = pipeline_cfg.cuda_memory_fraction
+
     model_key = config.get("model", {}).get("key", "qwen25vl_3b")
     adapter = ModelFactory.get_adapter(model_key, config)
 
@@ -43,7 +84,7 @@ def main():
         print("[ERROR] Training manifest missing! Please run `python training/scripts/prepare_dataset.py` first.")
         sys.exit(1)
 
-    # 1. Save run metadata under outputs/experiments/<experiment>/run_metadata.json
+    # 2. Save run metadata under outputs/experiments/<experiment>/run_metadata.json
     exp_output_dir = os.path.abspath(os.path.join("outputs", "experiments", args.experiment))
     os.makedirs(exp_output_dir, exist_ok=True)
 
@@ -59,12 +100,13 @@ def main():
         "epochs": config.get("training", {}).get("num_epochs"),
         "quantization": config.get("quantization", {}).get("quant_type"),
         "hardware_profile": config.get("hardware_profile"),
+        "early_stopping_config": config.get("early_stopping", {}),
     }
 
     with open(os.path.join(exp_output_dir, "run_metadata.json"), "w", encoding="utf-8") as f:
         json.dump(run_metadata, f, indent=2)
 
-    # 2. Run fine-tuning
+    # 3. Run fine-tuning
     train_summary = train_vlm(
         adapter=adapter,
         config=config,
@@ -75,16 +117,17 @@ def main():
         smoke_test=args.smoke_test,
     )
 
-    # Update run metadata with timing/vram results
+    # Update run metadata with timing, vram, parameter counts, and early stopping results
     run_metadata.update({
         "total_training_time_s": train_summary["total_training_time_s"],
         "peak_vram_gb": train_summary["peak_vram_gb"],
         "param_counts": train_summary["param_counts"],
+        "early_stopping_result": train_summary.get("early_stopping"),
     })
     with open(os.path.join(exp_output_dir, "run_metadata.json"), "w", encoding="utf-8") as f:
         json.dump(run_metadata, f, indent=2)
 
-    # 3. Automatically run post-training test evaluation
+    # 4. Automatically run post-training test evaluation
     if not args.no_eval:
         print(f"\n--- Running Automated Post-Training Test Evaluation for {args.experiment} ---")
         run_evaluation(experiment_name=args.experiment, config=config, adapter=adapter)

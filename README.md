@@ -84,20 +84,23 @@ class PipelineConfig:
 
 ## Environment Setup
 
-### 1. Create Virtual Environment & Install Dependencies
+### 🚀 Direct Setup (Linux ML GPU Server & Local Development)
+
+Simply create a virtual environment and run `pip install -r requirements.txt`. This will automatically fetch CUDA 12.1-enabled PyTorch, bitsandbytes, accelerate, and all multimodal training dependencies:
+
 ```bash
-# Create virtual environment
-python -m venv .venv
+# 1. Create and activate virtual environment
+python3 -m venv .venv
+source .venv/bin/activate       # On Linux / macOS
+# .venv\Scripts\Activate.ps1   # On Windows PowerShell
 
-# Activate on Windows PowerShell
-.venv\Scripts\Activate.ps1
-
-# Install dependencies
+# 2. Install all dependencies with PyTorch CUDA acceleration
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment Variables (Optional for Cloud APIs)
-Create a `.env` file in the project root directory:
+### 🔑 Configure Environment Variables (Optional for Cloud APIs)
+Create a `.env` file in the project root directory if using cloud annotation providers:
 ```env
 GEMINI_API_KEY=AIzaSy-your-key-here
 GROQ_API_KEY=gsk_your-key-here

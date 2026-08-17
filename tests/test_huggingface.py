@@ -2,6 +2,7 @@ import sys
 import json
 import asyncio
 import unittest
+import torch
 from unittest.mock import patch, MagicMock
 from pathlib import Path
 
@@ -41,12 +42,14 @@ class TestHuggingFaceVisionModel(unittest.TestCase):
     @patch("vlm_annotation.src.models.huggingface.AutoProcessor")
     def test_successful_generate_annotation(self, mock_processor_cls, mock_causal_lm, mock_qwen_vl, mock_image_open):
         mock_img = MagicMock()
+        mock_img.width = 800
+        mock_img.height = 600
         mock_img.convert.return_value = mock_img
         mock_image_open.return_value = mock_img
 
         mock_proc_inst = MagicMock()
         mock_proc_inst.apply_chat_template.return_value = "Formatted prompt"
-        mock_proc_inst.return_value = {"input_ids": MagicMock(shape=(1, 10))}
+        mock_proc_inst.return_value = {"input_ids": torch.zeros((1, 10), dtype=torch.long)}
         json_output = json.dumps({
             "disease": "Bacterial_blight",
             "visible_observations": ["Angular leaf spots"],
@@ -57,7 +60,8 @@ class TestHuggingFaceVisionModel(unittest.TestCase):
         mock_processor_cls.from_pretrained.return_value = mock_proc_inst
 
         mock_model_inst = MagicMock()
-        mock_model_inst.generate.return_value = MagicMock()
+        mock_model_inst.generate.return_value = torch.zeros((1, 25), dtype=torch.long)
+        mock_model_inst.device = "cpu"
         mock_qwen_vl.from_pretrained.return_value = mock_model_inst
         mock_causal_lm.from_pretrained.return_value = mock_model_inst
 
@@ -84,6 +88,8 @@ class TestHuggingFaceVisionModel(unittest.TestCase):
         mock_tokenizer_cls.from_pretrained.return_value = MagicMock()
 
         mock_img = MagicMock()
+        mock_img.width = 800
+        mock_img.height = 600
         mock_img.convert.return_value = mock_img
         mock_image_open.return_value = mock_img
 
