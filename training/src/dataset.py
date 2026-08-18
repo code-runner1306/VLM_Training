@@ -163,6 +163,7 @@ class VLMDataset(Dataset):
         self,
         manifest_path: str,
         user_prompt: str = DEFAULT_USER_PROMPT,
+        max_items: Optional[int] = None,
     ):
         self.manifest_path = manifest_path
         self.user_prompt = user_prompt
@@ -174,6 +175,8 @@ class VLMDataset(Dataset):
                     line = line.strip()
                     if line:
                         self.items.append(json.loads(line))
+            if max_items is not None:
+                self.items = self.items[:max_items]
 
     def __len__(self) -> int:
         return len(self.items)
@@ -221,8 +224,14 @@ class VLMDataCollator:
         )
 
         labels = inputs["input_ids"].clone()
-        if hasattr(self.processor, "tokenizer") and self.processor.tokenizer.pad_token_id is not None:
-            labels[labels == self.processor.tokenizer.pad_token_id] = -100
+        tokenizer = getattr(self.processor, "tokenizer", None)
+        if tokenizer is not None:
+            if tokenizer.pad_token_id is not None:
+                labels[labels == tokenizer.pad_token_id] = -100
+            for token_id_name in ("image_token_id", "video_token_id"):
+                token_id = getattr(tokenizer, token_id_name, None)
+                if token_id is not None:
+                    labels[labels == token_id] = -100
         inputs["labels"] = labels
 
         return inputs

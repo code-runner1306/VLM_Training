@@ -264,7 +264,11 @@ def run_dataset_preparation_stage(annotation_path: Path, args, logger: logging.L
 
 
 def purge_hf_model_cache(model_id: str, logger: logging.Logger):
-    """Purge downloaded base model weights from Hugging Face hub cache to free disk space."""
+    """Purge downloaded base model weights from Hugging Face hub cache to free disk space.
+
+    Only clears the HF hub cache (~/.cache/huggingface/hub/). The repository-local
+    cache (models/base/) is intentionally preserved so subsequent runs load offline.
+    """
     import shutil
     clean_repo_folder = "models--" + model_id.replace("/", "--")
     cache_dir = Path.home() / ".cache" / "huggingface" / "hub" / clean_repo_folder
@@ -277,6 +281,7 @@ def purge_hf_model_cache(model_id: str, logger: logging.Logger):
             logger.warning(f"[CACHE CLEANUP] Warning: Could not remove cache folder {cache_dir}: {e}")
     else:
         logger.info(f"[CACHE CLEANUP] Base model cache folder not found at {cache_dir} (already clean).")
+    logger.info(f"[CACHE CLEANUP] Preserved repository-local cache models/base/ for '{model_id}'.")
 
 
 def run_training_and_evaluation_stage(args, logger: logging.Logger):

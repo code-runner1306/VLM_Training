@@ -82,6 +82,42 @@ class PipelineConfig:
 
 ---
 
+## 📦 Local Base-Model Cache & Prefetch
+
+Base models are cached **inside the repository** under `models/base/<org>__<name>/`
+(e.g. `models/base/Qwen__Qwen2.5-VL-3B-Instruct/`) so training, annotation, and
+evaluation never re-download from the Hub on repeat runs. `models/` is
+git-ignored, so cached weights are never committed or pushed.
+
+### Prefetch Models (Optional, Recommended Before Training)
+
+```bash
+# Download all default-pipeline models from config.py (annotation + training + scold)
+python scripts/download_models.py --all
+
+# Download specific models
+python scripts/download_models.py --models Qwen/Qwen2.5-VL-3B-Instruct Qwen/Qwen3-VL-8B-Instruct
+
+# Force re-download / bypass the cache
+python scripts/download_models.py --all --force
+```
+
+`HF_TOKEN` is read from the environment or `.env` when `--token` is not given
+(gated models such as Qwen2.5-VL require it).
+
+### Cache-First Loading
+
+Everywhere the pipeline loads a Hugging Face model/processor it resolves in this order:
+1. `models/base/<org>__<name>/` (repository-local cache)
+2. Hugging Face hub cache (`local_files_only=True`)
+3. Fresh download into `models/base/` (then loaded from there)
+
+`training/src/model_cache.py` implements the resolution helpers; annotation,
+health checks, training adapters, and evaluation all use them. The `--force` flag
+on `download_models.py` is the only way to invalidate a cached snapshot.
+
+---
+
 ## Environment Setup
 
 ### 🚀 Direct Setup (Linux ML GPU Server & Local Development)
@@ -106,6 +142,7 @@ GEMINI_API_KEY=AIzaSy-your-key-here
 GROQ_API_KEY=gsk_your-key-here
 NVIDIA_API_KEY=nvapi-your-key-here
 OPENROUTER_API_KEY=sk-or-v1-your-key-here
+HF_TOKEN=hf_your-token-here
 ```
 
 ---
@@ -231,7 +268,13 @@ python training/scripts/prepare_dataset.py --annotations_file outputs/annotation
 
 ---
 
-### 7. VLM QLoRA Fine-Tuning
+### 7. Real VLM QLoRA Fine-Tuning (transformers.Trainer)
+
+Training uses a real gradient-based `transformers.Trainer` loop driven by the
+YAML config: learning rate, weight decay, warmup ratio, scheduler, batch size,
+gradient accumulation, max grad norm, bf16/fp16, gradient checkpointing, and
+logging/eval/save steps. Checkpoints are written by the Trainer under
+`checkpoints/<experiment>/` and support resume + early stopping.
 
 #### Train Qwen2.5-VL-3B
 ```bash
@@ -243,14 +286,34 @@ python training/scripts/train.py --config training/configs/qwen25vl_3b.yaml --ex
 python training/scripts/train.py --config training/configs/qwen25vl_7b.yaml --experiment qwen25vl-7b-v1
 ```
 
-#### Resume Interrupted Training Checkpoint
+#### Resume Interrupted Training from the Latest Checkpoint
 ```bash
 python training/scripts/train.py --config training/configs/qwen25vl_3b.yaml --experiment qwen25vl-3b-v1 --resume
 ```
 
+#### 1-Epoch Smoke Run (Fast Pipeline Validation)
+```bash
+python training/scripts/train.py --config training/configs/qwen25vl_3b.yaml --experiment qwen25vl-3b-v1 --smoke-test
+```
+
+#### Disable / Tune Early Stopping
+```bash
+python training/scripts/train.py --config training/configs/qwen25vl_3b.yaml --experiment qwen25vl-3b-v1 --no-early-stopping
+python training/scripts/train.py --config training/configs/qwen25vl_3b.yaml --experiment qwen25vl-3b-v1 --patience 3 --early-stopping-monitor val_loss
+```
+
+The best (or last) PEFT adapter is exported to `models/<experiment>/` after
+training, with a `run_metadata.json` summary (parameter counts, VRAM, timing,
+early-stopping result).
+
 ---
 
-### 8. Post-Training Evaluation & Comparison
+### 8. Post-Training Evaluation & Comparison (Real Inference)
+
+Evaluation loads the base model from the local cache, attaches the trained
+`models/<experiment>/` adapter via `PeftModel.from_pretrained`, and generates a
+real response per held-out test image using the training user prompt. Predictions
+therefore come from actual model inference (never ground-truth passthrough).
 
 #### Evaluate Fine-Tuned Model on Held-Out Test Set
 ```bash

@@ -2,17 +2,15 @@ import re
 from typing import Dict, Any, Tuple, List, Optional
 import torch
 from training.src.model_adapters.base import BaseVLMAdapter
+from training.src.model_cache import load_model_from_cache_or_hub
 
 
 def load_from_pretrained_with_cache_check(cls, model_id: str, **kwargs):
     """
-    Attempt to load a model or processor directly from local Hugging Face cache first (local_files_only=True).
-    If the model is not found in local cache, fall back to downloading/loading from HF Hub (local_files_only=False).
+    Load a model or processor preferring the repo-local cache
+    (models/base/<org>__<name>), then the HF hub cache, then a fresh download.
     """
-    try:
-        return cls.from_pretrained(model_id, local_files_only=True, **kwargs)
-    except Exception:
-        return cls.from_pretrained(model_id, local_files_only=False, **kwargs)
+    return load_model_from_cache_or_hub(cls, model_id, **kwargs)
 
 
 class Qwen25VLAdapter(BaseVLMAdapter):

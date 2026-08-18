@@ -6,6 +6,7 @@ import torch
 from PIL import Image
 
 from vlm_annotation.src.models.base import extract_json_from_text
+from vlm_annotation.src.models.huggingface import load_from_pretrained_with_cache_check
 
 try:
     import transformers
@@ -29,12 +30,11 @@ def check_huggingface_environment_and_model(model_id: str = "Qwen/Qwen2.5-VL-7B-
     cuda_available = torch.cuda.is_available()
     device_str = torch.cuda.get_device_name(0) if cuda_available else "CPU (No CUDA GPU detected)"
 
-    # Test loading AutoProcessor to verify model ID reachability (checking local cache first)
+    # Test loading AutoProcessor to verify model ID reachability.
+    # Prefers the repo-local cache (models/base/<org>__<name>), then the HF hub
+    # cache, and finally downloads into the repo-local cache on a miss.
     try:
-        try:
-            processor = AutoProcessor.from_pretrained(model_id, local_files_only=True, trust_remote_code=True)
-        except Exception:
-            processor = AutoProcessor.from_pretrained(model_id, local_files_only=False, trust_remote_code=True)
+        processor = load_from_pretrained_with_cache_check(AutoProcessor, model_id, trust_remote_code=True)
     except Exception as e:
         return False, f"ERROR: Failed to load AutoProcessor for Hugging Face model '{model_id}': {e}"
 

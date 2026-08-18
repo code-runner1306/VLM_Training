@@ -34,16 +34,16 @@ except ImportError:
 
 logger = logging.getLogger("HuggingFaceVisionModel")
 
+from training.src.model_cache import load_model_from_cache_or_hub
+
 
 def load_from_pretrained_with_cache_check(cls, model_id: str, **kwargs):
     """
-    Attempt to load a model or processor directly from local Hugging Face cache first (local_files_only=True).
-    If the model is not found in local cache, fall back to downloading/loading from HF Hub (local_files_only=False).
+    Attempt to load a model or processor from the repository-local cache
+    (models/base/<org>__<name>) first, then the Hugging Face hub cache,
+    and finally download into the repo-local cache before loading.
     """
-    try:
-        return cls.from_pretrained(model_id, local_files_only=True, **kwargs)
-    except Exception:
-        return cls.from_pretrained(model_id, local_files_only=False, **kwargs)
+    return load_model_from_cache_or_hub(cls, model_id, **kwargs)
 
 
 class HuggingFaceVisionModel(VisionModel):

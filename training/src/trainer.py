@@ -1,25 +1,34 @@
 import os
 import sys
 import time
-import json
+import glob
 import torch
 from typing import Dict, Any, Optional, Tuple
-from training.src.model_adapters.base import BaseVLMAdapter
-from training.src.lora import create_lora_config
-from training.src.checkpoint import CheckpointManager
-from training.src.early_stopping import EarlyStopping
-from training.src.plotting import plot_training_curves
 
 try:
-    from transformers import BitsAndBytesConfig
+    from transformers import (
+        BitsAndBytesConfig,
+        TrainingArguments,
+        Trainer,
+        EarlyStoppingCallback,
+    )
 except ImportError:
     BitsAndBytesConfig = None
+    TrainingArguments = None
+    Trainer = None
+    EarlyStoppingCallback = None
+
+from training.src.model_adapters.base import BaseVLMAdapter
+from training.src.lora import create_lora_config
+from training.src.plotting import plot_training_curves
+from training.src.dataset import VLMDataset, VLMDataCollator, DEFAULT_USER_PROMPT
 
 try:
-    from peft import get_peft_model, PeftModel
+    from peft import get_peft_model, PeftModel, prepare_model_for_kbit_training
 except ImportError:
     get_peft_model = None
     PeftModel = None
+    prepare_model_for_kbit_training = None
 
 
 def get_quantization_config(config: Dict[str, Any]) -> Optional[Any]:
@@ -96,6 +105,46 @@ def print_parameter_summary(param_counts: Dict[str, Any]):
     print("=" * 60)
 
 
+def _map_monitor_to_metric(monitor: str) -> Tuple[str, bool]:
+    """Map an early-stopping monitor name to a Trainer metric and its direction."""
+    if monitor == "val_loss":
+        return "eval_loss", False
+    if monitor == "loss":
+        return "loss", False
+    if monitor.endswith("_loss"):
+        return monitor, False
+    return monitor, True
+
+
+class _EarlyStoppingRecorder(EarlyStoppingCallback):
+    """EarlyStoppingCallback that records when and at which epoch it triggered."""
+
+    def __init__(self, patience: int, threshold: Optional[float]):
+        super().__init__(early_stopping_patience=patience, early_stopping_threshold=threshold)
+        self.triggered = False
+        self.trigger_epoch: Optional[float] = None
+
+    def on_evaluate(self, args, state, control, metrics, **kwargs):
+        super().on_evaluate(args, state, control, metrics, **kwargs)
+        if control.should_training_stop and not self.triggered:
+            self.triggered = True
+            self.trigger_epoch = state.epoch
+
+
+def _find_latest_checkpoint(checkpoint_dir: str) -> Optional[str]:
+    """Return the newest `checkpoint-<step>` directory under checkpoint_dir."""
+    candidates = glob.glob(os.path.join(checkpoint_dir, "checkpoint-*"))
+    if not candidates:
+        return None
+    candidates = [c for c in candidates if os.path.isdir(c)]
+    if not candidates:
+        return None
+    return max(
+        candidates,
+        key=lambda p: int(os.path.basename(p).split("checkpoint-")[-1]),
+    )
+
+
 def train_vlm(
     adapter: BaseVLMAdapter,
     config: Dict[str, Any],
@@ -106,12 +155,13 @@ def train_vlm(
     smoke_test: bool = False,
 ) -> Dict[str, Any]:
     """
-    Execute VLM QLoRA fine-tuning loop with Early Stopping, CUDA OOM safety,
-    and checkpoint management.
+    Execute real VLM QLoRA fine-tuning via transformers.Trainer with native
+    checkpointing, resume, early stopping, and CUDA OOM safety.
     """
     print(f"\n--- Initializing Fine-Tuning Run: {experiment_name} ---")
     if smoke_test:
-        print("[SMOKE TEST] Fast verification training mode enabled.")
+        print("[SMOKE TEST] Fast verification training mode enabled (1 epoch, minimal samples).")
+
     # 0. Reserve CUDA Memory Overhead
     cuda_mem_fraction = config.get("training", {}).get("cuda_memory_fraction", 30 / 32)
     if torch.cuda.is_available():
@@ -122,48 +172,33 @@ def train_vlm(
         except Exception as e:
             print(f"[CUDA MEMORY] Note: Could not set memory fraction: {e}")
 
-    ckpt_dir = config.get("checkpoint", {}).get("output_dir", f"checkpoints/{experiment_name}")
-    ckpt_manager = CheckpointManager(ckpt_dir)
+    if Trainer is None or TrainingArguments is None:
+        raise ImportError(
+            "transformers >= 4.41 is required for Trainer-based training. Please run `pip install transformers`."
+        )
 
-    # 1. Early Stopping Initialization
+    checkpoint_dir = os.path.abspath(config.get("checkpoint", {}).get("output_dir", f"checkpoints/{experiment_name}"))
+
+    # 1. Early stopping configuration (YAML + config.py overrides already merged by callers)
     es_cfg = config.get("early_stopping", {})
-    early_stopping: Optional[EarlyStopping] = None
-    if es_cfg.get("enabled", True) and not smoke_test:
-        early_stopping = EarlyStopping(
-            monitor=es_cfg.get("monitor", "val_loss"),
-            mode=es_cfg.get("mode", "min"),
-            patience=es_cfg.get("patience", 3),
-            min_delta=es_cfg.get("min_delta", 0.001),
-            restore_best_weights=es_cfg.get("restore_best_weights", True),
-            baseline=es_cfg.get("baseline"),
-            stopping_threshold=es_cfg.get("stopping_threshold"),
-            divergence_threshold=es_cfg.get("divergence_threshold", 50.0),
-            verbose=True,
-        )
-        print(
-            f"[EARLY STOPPING] Configured: monitor='{early_stopping.monitor}', "
-            f"mode='{early_stopping.mode}', patience={early_stopping.patience}, min_delta={early_stopping.min_delta}"
-        )
-    elif smoke_test:
-        print("[EARLY STOPPING] Disabled during fast smoke test.")
+    early_stopping_enabled = es_cfg.get("enabled", True) and not smoke_test
+    es_patience = es_cfg.get("patience", 3)
+    es_threshold = es_cfg.get("stopping_threshold")
+    es_monitor = es_cfg.get("monitor", "val_loss")
+    es_mode = es_cfg.get("mode", "min")
+    metric_for_best_model, greater_is_better = _map_monitor_to_metric(es_monitor)
+    if es_mode == "min":
+        greater_is_better = False
+    elif es_mode == "max":
+        greater_is_better = True
 
-    resume_ckpt = None
-    start_epoch = 1
-    if resume:
-        resume_ckpt = ckpt_manager.get_latest_checkpoint()
-        if resume_ckpt:
-            print(f"[RESUME] Found existing checkpoint to resume: {resume_ckpt}")
-            meta = ckpt_manager.get_checkpoint_metadata(resume_ckpt)
-            if meta:
-                start_epoch = meta.get("epoch", 0) + 1
-                if early_stopping and "early_stopping_state" in meta and meta["early_stopping_state"]:
-                    early_stopping.load_state_dict(meta["early_stopping_state"])
-                    print(
-                        f"[RESUME] Restored early stopping state: counter={early_stopping.counter}, "
-                        f"best_score={early_stopping.best_score}, best_epoch={early_stopping.best_epoch}"
-                    )
-        else:
-            print("[RESUME] No existing checkpoint found. Starting fresh training run.")
+    if early_stopping_enabled:
+        print(
+            f"[EARLY STOPPING] Configured: monitor='{es_monitor}' (metric='{metric_for_best_model}'), "
+            f"patience={es_patience}, threshold={es_threshold}"
+        )
+    else:
+        print("[EARLY STOPPING] Disabled.")
 
     # 2. Quantization & Model Loading
     quant_config = get_quantization_config(config)
@@ -186,86 +221,111 @@ def train_vlm(
         lora_dropout=config.get("adaptation", {}).get("lora_dropout", 0.05),
     )
 
-    if resume_ckpt and os.path.exists(os.path.join(resume_ckpt, "adapter_config.json")):
-        print(f"Loading adapter weights from resume checkpoint: {resume_ckpt}")
-        model = PeftModel.from_pretrained(model, resume_ckpt, is_trainable=True)
-    else:
-        model = get_peft_model(model, peft_config)
+    if quant_config is not None and prepare_model_for_kbit_training is not None:
+        print("[TRAINING] Preparing 4-bit quantized model for k-bit LoRA training...")
+        model = prepare_model_for_kbit_training(model)
+
+    model = get_peft_model(model, peft_config)
 
     # 4. Print parameter counts
     param_counts = count_parameters(model)
     print_parameter_summary(param_counts)
 
-    # 5. Prepare training state
-    num_epochs = 1 if smoke_test else config.get("training", {}).get("num_epochs", 5)
-    lr = float(config.get("training", {}).get("learning_rate", 2e-4))
-    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01)
+    # 5. Datasets & collator
+    train_cfg = config.get("training", {})
+    user_prompt = config.get("data", {}).get("user_prompt", DEFAULT_USER_PROMPT)
+    train_limit = 8 if smoke_test else None
+    val_limit = 4 if smoke_test else None
+
+    train_dataset = VLMDataset(train_manifest, user_prompt=user_prompt, max_items=train_limit)
+    if len(train_dataset) == 0:
+        raise ValueError(
+            f"Training manifest is empty or missing: {train_manifest}. "
+            "Please run `python training/scripts/prepare_dataset.py` first."
+        )
+    eval_dataset = VLMDataset(val_manifest, user_prompt=user_prompt, max_items=val_limit)
+    data_collator = VLMDataCollator(processor)
+
+    print(f"[DATA] Train samples: {len(train_dataset)} | Validation samples: {len(eval_dataset)}")
+    print(f"[DATA] Collator max_length: {data_collator.max_length}")
+
+    use_eval = early_stopping_enabled and len(eval_dataset) > 0
+
+    # 6. Training arguments
+    num_epochs = 1 if smoke_test else train_cfg.get("num_epochs", 5)
+    lr = float(train_cfg.get("learning_rate", 2e-4))
+    cuda_available = torch.cuda.is_available()
+    fp16 = bool(train_cfg.get("fp16", False)) and cuda_available
+    bf16 = bool(train_cfg.get("bf16", False)) and cuda_available
+    gradient_checkpointing = bool(train_cfg.get("gradient_checkpointing", False))
+    if gradient_checkpointing and hasattr(model.config, "use_cache"):
+        model.config.use_cache = False
+
+    training_args = TrainingArguments(
+        output_dir=checkpoint_dir,
+        num_train_epochs=num_epochs,
+        per_device_train_batch_size=int(train_cfg.get("batch_size", 1)),
+        per_device_eval_batch_size=int(train_cfg.get("batch_size", 1)),
+        gradient_accumulation_steps=int(train_cfg.get("gradient_accumulation_steps", 8)),
+        learning_rate=lr,
+        weight_decay=float(train_cfg.get("weight_decay", 0.01)),
+        warmup_ratio=float(train_cfg.get("warmup_ratio", 0.03)),
+        lr_scheduler_type=train_cfg.get("lr_scheduler_type", "cosine"),
+        max_grad_norm=float(train_cfg.get("max_grad_norm", 1.0)),
+        fp16=fp16,
+        bf16=bf16,
+        gradient_checkpointing=gradient_checkpointing,
+        logging_steps=int(train_cfg.get("logging_steps", 10)),
+        eval_strategy="steps" if use_eval else "no",
+        eval_steps=int(train_cfg.get("eval_steps", 100)),
+        save_strategy="steps",
+        save_steps=int(train_cfg.get("save_steps", 100)),
+        save_total_limit=int(config.get("checkpoint", {}).get("save_total_limit", 3)),
+        load_best_model_at_end=use_eval,
+        metric_for_best_model=metric_for_best_model if use_eval else None,
+        greater_is_better=greater_is_better if use_eval else None,
+        remove_unused_columns=False,
+        prediction_loss_only=True,
+        dataloader_pin_memory=False,
+        report_to=[],
+    )
+
+    # 7. Build Trainer (with early stopping callback)
+    es_callback = None
+    callbacks = []
+    if use_eval:
+        es_callback = _EarlyStoppingRecorder(patience=es_patience, threshold=es_threshold)
+        callbacks.append(es_callback)
+
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        data_collator=data_collator,
+        train_dataset=train_dataset,
+        eval_dataset=eval_dataset if use_eval else None,
+        callbacks=callbacks,
+    )
+
+    resume_ckpt = None
+    if resume:
+        resume_ckpt = _find_latest_checkpoint(checkpoint_dir)
+        if resume_ckpt:
+            print(f"[RESUME] Resuming from checkpoint: {resume_ckpt}")
+        else:
+            print("[RESUME] No existing checkpoint found. Starting fresh training run.")
 
     start_time = time.time()
     peak_vram_gb = 0.0
-    history = {"train_loss": [], "val_loss": [], "learning_rate": []}
 
     try:
-        if torch.cuda.is_available():
+        if cuda_available:
             torch.cuda.reset_peak_memory_stats()
 
-        print(f"\nStarting fine-tuning training loop (epochs {start_epoch} to {num_epochs})...")
-        for epoch in range(start_epoch, num_epochs + 1):
-            print(f"\n--- Epoch {epoch}/{num_epochs} ---")
-            time.sleep(0.3)
+        trainer.train(resume_from_checkpoint=resume_ckpt)
 
-            # Simulated / calculated step loss & val loss
-            train_loss = max(0.01, 0.25 / epoch)
-            val_loss = max(0.02, (0.30 / epoch) + (0.02 if epoch > 3 else 0.0))
-
-            history["train_loss"].append(train_loss)
-            history["val_loss"].append(val_loss)
-            history["learning_rate"].append(lr)
-
-            # Record peak VRAM
-            if torch.cuda.is_available():
-                vram_bytes = torch.cuda.max_memory_allocated()
-                peak_vram_gb = max(peak_vram_gb, vram_bytes / (1024 ** 3))
-
-            current_metrics = {
-                "loss": train_loss,
-                "train_loss": train_loss,
-                "val_loss": val_loss,
-                "learning_rate": lr,
-            }
-
-            print(f"Epoch {epoch} finished: train_loss={train_loss:.4f} | val_loss={val_loss:.4f}")
-
-            # Save regular step checkpoint
-            es_state = early_stopping.state_dict() if early_stopping else None
-            ckpt_manager.save_checkpoint(
-                model=model,
-                processor=processor,
-                optimizer=optimizer,
-                scheduler=None,
-                step=epoch * 100,
-                epoch=epoch,
-                training_config=config,
-                metrics=current_metrics,
-                early_stopping_state=es_state,
-            )
-
-            # Evaluate Early Stopping
-            if early_stopping:
-                should_stop = early_stopping.step(
-                    metrics=current_metrics,
-                    epoch=epoch,
-                    step=epoch * 100,
-                    model=model,
-                    processor=processor,
-                    optimizer=optimizer,
-                    scheduler=None,
-                    ckpt_manager=ckpt_manager,
-                    training_config=config,
-                )
-                if should_stop:
-                    print(f"\n[EARLY STOPPING] ⏹️  Halting training loop at epoch {epoch}/{num_epochs}.")
-                    break
+        if cuda_available:
+            vram_bytes = torch.cuda.max_memory_allocated()
+            peak_vram_gb = max(peak_vram_gb, vram_bytes / (1024 ** 3))
 
     except RuntimeError as e:
         if "out of memory" in str(e).lower() or "CUDA out of memory" in str(e):
@@ -278,7 +338,7 @@ def train_vlm(
             print("  2. Reduce batch size or increase gradient_accumulation_steps")
             print("  3. Enable gradient_checkpointing in config YAML")
             print("!" * 60)
-            if torch.cuda.is_available():
+            if cuda_available:
                 torch.cuda.empty_cache()
             sys.exit(1)
         else:
@@ -286,31 +346,60 @@ def train_vlm(
 
     total_training_time = time.time() - start_time
 
-    # If early stopping occurred or best weights requested, restore best checkpoint weights before export
-    if early_stopping and early_stopping.restore_best_weights and early_stopping.best_score is not None:
-        restored = early_stopping.restore_weights_if_needed(model=model, ckpt_manager=ckpt_manager, processor=processor)
-        if restored:
-            print(f"[EARLY STOPPING] Restored best adapter weights (best epoch {early_stopping.best_epoch}).")
-
-    # Save final model adapter artifacts under models/ and outputs/
+    # 8. Export the best/last PEFT adapter to models/<experiment>/
     final_model_dir = os.path.abspath(os.path.join("models", experiment_name))
     os.makedirs(final_model_dir, exist_ok=True)
-    if hasattr(model, "save_pretrained"):
-        model.save_pretrained(final_model_dir)
+    trainer.save_model(final_model_dir)
+    if hasattr(processor, "save_pretrained"):
+        processor.save_pretrained(final_model_dir)
+    print(f"\nAdapter exported to: {final_model_dir}")
 
-    # Plot training and validation loss curves
+    # 9. Build training history from Trainer logs and plot curves
+    history = {"train_loss": [], "val_loss": [], "learning_rate": []}
+    best_epoch = None
+    best_metric_value = None
+    for log in trainer.state.log_history:
+        if "eval_loss" in log:
+            history["val_loss"].append(float(log["eval_loss"]))
+            epoch = log.get("epoch")
+            if best_metric_value is None:
+                best_metric_value = log["eval_loss"]
+                best_epoch = epoch
+            elif greater_is_better and log["eval_loss"] > best_metric_value:
+                best_metric_value = log["eval_loss"]
+                best_epoch = epoch
+            elif not greater_is_better and log["eval_loss"] < best_metric_value:
+                best_metric_value = log["eval_loss"]
+                best_epoch = epoch
+        if "loss" in log and "eval_loss" not in log:
+            history["train_loss"].append(float(log["loss"]))
+            if "learning_rate" in log:
+                history["learning_rate"].append(float(log["learning_rate"]))
+
     exp_plots_dir = os.path.abspath(os.path.join("outputs", "experiments", experiment_name, "plots"))
     plot_training_curves(
         history=history,
         output_dir=exp_plots_dir,
-        best_epoch=early_stopping.best_epoch if early_stopping else None,
-        stopped_epoch=early_stopping.stopped_epoch if early_stopping else None,
+        best_epoch=int(best_epoch) if best_epoch is not None else None,
+        stopped_epoch=int(es_callback.trigger_epoch) if es_callback and es_callback.triggered else None,
     )
 
     print(f"\nTraining successfully finished in {total_training_time:.2f}s.")
     print(f"Final model adapter saved to: {final_model_dir}")
 
-    early_stopping_summary = early_stopping.get_summary() if early_stopping else None
+    early_stopping_summary = None
+    if use_eval:
+        early_stopping_summary = {
+            "early_stopping_enabled": True,
+            "monitored_metric": es_monitor,
+            "metric_for_best_model": metric_for_best_model,
+            "mode": es_mode,
+            "patience": es_patience,
+            "early_stopped": bool(es_callback.triggered),
+            "stopped_epoch": int(es_callback.trigger_epoch) if es_callback.triggered else None,
+            "best_epoch": int(best_epoch) if best_epoch is not None else None,
+            "best_metric": round(best_metric_value, 6) if best_metric_value is not None else None,
+        }
 
     return {
         "experiment": experiment_name,

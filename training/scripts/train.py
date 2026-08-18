@@ -12,8 +12,8 @@ try:
 except ImportError:
     pipeline_cfg = None
 
-from training.src.model_factory import ModelFactory
 from training.src.trainer import train_vlm
+from training.src.model_factory import ModelFactory
 from training.scripts.evaluate import run_evaluation
 
 
