@@ -27,7 +27,7 @@ Required JSON Schema Output:
   "image_path": "{IMAGE_PATH}",
   "disease": "{DISEASE_NAME}",
   "visible_observations": [
-    "description of clear, visible leaf/boll/stem visual details"
+    "description of clear, visible leaf/stalk/cane/sheath visual details"
   ],
   "affected_regions": [
     "observed leaf upper surface", "leaf veins", etc.

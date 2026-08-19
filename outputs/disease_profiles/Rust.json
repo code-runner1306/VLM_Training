@@ -1,0 +1,53 @@
+{
+  "disease": "Rust",
+  "typical_symptoms": [
+    "small elongated spots on leaves",
+    "numerous reddish-brown to dark brown pustules on underside and upper surface of leaves",
+    "premature drying and death of severely infected leaves",
+    "stunted growth in severe infestations"
+  ],
+  "visual_characteristics": [
+    "numerous tiny elongated lesions aligned parallel to leaf veins",
+    "raised pustules that may rupture to release powdery spores",
+    "dense dusting of brown or orange spore masses on leaf undersides",
+    "yellowing or chlorosis surrounding older lesions"
+  ],
+  "affected_regions": [
+    "leaves",
+    "leaf blade"
+  ],
+  "lesion_characteristics": [
+    "small oblong to linear spots",
+    "restricted laterally by major leaf veins",
+    "narrow with tapered ends",
+    "size typically ranging from 2 to 10 mm in length",
+    "raised pustular centers"
+  ],
+  "color_characteristics": [
+    "yellow to light green chlorotic spots in early stages",
+    "reddish-brown to dark brown as pustules mature",
+    "orange-brown when spore mass is fresh",
+    "greyish or dark brown in older, senescing lesions"
+  ],
+  "texture_characteristics": [
+    "powdery due to dense mass of fungal spores",
+    "rough and raised relative to healthy leaf tissue",
+    "dry and papery in advanced necrotic stages"
+  ],
+  "spatial_patterns": [
+    "scattered or clustered spots concentrated between leaf veins",
+    "linear streak alignment parallel to the midrib and parallel veins",
+    "more severe infection commonly observed on lower and older leaves"
+  ],
+  "distinguishing_features": [
+    "presence of raised, elongated pustules releasing a powdery brown or orange spore dust when touched",
+    "strict confinement of lesion width by parallel leaf veins creating a streaked appearance"
+  ],
+  "commonly_confused_with": [
+    "Brown spot",
+    "Yellow spot",
+    "Ring spot",
+    "Eyespot",
+    "Pokkah Boeng"
+  ]
+}

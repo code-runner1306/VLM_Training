@@ -31,3 +31,4 @@ Cotton_dataset/
 *.gguf
 *.h5
 *.onnx
+sugarcane_dataset/

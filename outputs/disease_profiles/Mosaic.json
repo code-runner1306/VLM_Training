@@ -1,0 +1,39 @@
+{
+  "disease": "Mosaic",
+  "typical_symptoms": [
+    "Mottled appearance on the youngest leaves showing alternating patches of green and light green or yellowish tissue",
+    "Elongated chlorotic stripes or streaks running parallel to the leaf veins",
+    "Stunting of the entire plant in severe infections",
+    "Occasional mild necrosis in older chlorotic areas"
+  ],
+  "visual_characteristics": [
+    "Irregular light and dark green patches creating a mosaic or checkerboard pattern",
+    "Prominent striping parallel to the main vein",
+    "Greater chlorosis near the base of young expanding leaves"
+  ],
+  "affected_regions": [
+    "leaves",
+    "leaf blade"
+  ],
+  "lesion_characteristics": [
+    "Elongated patches or streaks following the leaf veins without defined necrotic borders or halos"
+  ],
+  "color_characteristics": [
+    "Alternating shades of normal green, light green, pale yellow, and yellowish-white in a mottled distribution"
+  ],
+  "texture_characteristics": [
+    "Smooth normal leaf texture with no pustules, raised scabs, or water-soaking"
+  ],
+  "spatial_patterns": [
+    "Mottled patches and streak patterns running longitudinally parallel to the leaf veins"
+  ],
+  "distinguishing_features": [
+    "Interspersed light and dark green patches forming a true mosaic pattern without discrete spots, pustules, or heavy necrosis"
+  ],
+  "commonly_confused_with": [
+    "Yellow leaf syndrome",
+    "Sugarcane streak mosaic virus",
+    "Chlorotic streak",
+    "Iron or magnesium nutritional deficiencies"
+  ]
+}

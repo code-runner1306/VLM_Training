@@ -15,15 +15,15 @@ class PipelineConfig:
     # -------------------------------------------------------------------------
     # 1. Dataset & Directory Paths
     # -------------------------------------------------------------------------
-    dataset_dir: str = "Cotton_dataset"
+    dataset_dir: str = "sugarcane_dataset"
     output_dir: str = "outputs"
     log_dir: str = "logs"
 
     # -------------------------------------------------------------------------
     # 2. Synthetic Annotation Generation Settings (Single Model)
     # -------------------------------------------------------------------------
-    annotation_provider: str = "huggingface"  # Options: huggingface, gemini, ollama, nvidia, groq, openrouter
-    annotation_model: str = "Qwen/Qwen3-VL-8B-Instruct"  # Options: Qwen/Qwen3-VL-8B-Instruct, OpenGVLab/InternVL2_5-8B, OpenGVLab/InternVL2_5-14B, Qwen/Qwen2.5-VL-7B-Instruct
+    annotation_provider: str = "gemini"  # Options: huggingface, gemini, ollama, nvidia, groq, openrouter
+    annotation_model: str = "gemini-flash-lite-latest"  # Options: gemini-flash-lite-latest, gemini-flash-latest, Qwen/Qwen3-VL-8B-Instruct, etc.
     ollama_host: str = "http://127.0.0.1:11434"
     num_annotation_samples: Optional[int] = None  # Set integer (e.g. 500) to test subset, or None for full dataset
     start_index: int = 0
@@ -95,7 +95,7 @@ class PipelineConfig:
     # -------------------------------------------------------------------------
     smoke_test: bool = False  # Enable fast end-to-end pipeline smoke test with minimal sample sizes and steps
     skip_annotation: bool = False
-    skip_training: bool = False
+    skip_training: bool = True
     auto_push: bool = True  # Automatically stage, commit, and push outputs to GitHub on completion or error
 
 

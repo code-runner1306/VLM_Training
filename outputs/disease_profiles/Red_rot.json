@@ -1,0 +1,55 @@
+{
+  "disease": "Red_rot",
+  "typical_symptoms": [
+    "Reddish lesions along the midrib of leaves",
+    "Internal reddening of the stalk tissue with white transverse patches",
+    "Withering and drying of the top leaves starting from the margins",
+    "Stalk hollowed out with sour-smelling fermented juice in advanced stages",
+    "Shrinking and wrinkling of the rind"
+  ],
+  "visual_characteristics": [
+    "Elongated, blood-red or dark reddish-brown stripe or lesion running along the leaf midrib",
+    "Internal pith discoloration visible when stalks are split open longitudinally",
+    "Distinct white spots or patches crossing the red diseased pith tissue perpendicularly"
+  ],
+  "affected_regions": [
+    "leaves",
+    "leaf blade",
+    "midrib",
+    "stalks",
+    "sheaths",
+    "canes",
+    "nodes"
+  ],
+  "lesion_characteristics": [
+    "Elongated, linear or spindle-shaped streaks along leaf midribs",
+    "Ranging from a few centimeters to extensive streaks covering large portions of the midrib",
+    "Diffuse margins blending into healthy tissue or localized with chlorotic zones"
+  ],
+  "color_characteristics": [
+    "Bright red to dark reddish-brown lesions on midribs",
+    "Internal stalk pith turning dark red, brownish-red, or wine-colored",
+    "Characteristic contrasting white transverse bands across the reddened internal pith"
+  ],
+  "texture_characteristics": [
+    "Dry to slightly sunken lesions on leaf midribs",
+    "Spongy to dry internal stalk pith in advanced stages",
+    "Fermented and sour texture inside severely decayed stalks"
+  ],
+  "spatial_patterns": [
+    "Linear streaks confined primarily to the vascular trace of the leaf midrib",
+    "Internal vertical spreading along the vascular bundles within the sugarcane internodes"
+  ],
+  "distinguishing_features": [
+    "Diagnostic red lesion specifically restricted to the leaf midrib",
+    "Internal stalk pith showing reddening crossed by characteristic white horizontal bands"
+  ],
+  "commonly_confused_with": [
+    "Pokkah Boeng",
+    "Yellow spot",
+    "Brown spot",
+    "Ring spot",
+    "Fusarium stalk rot",
+    "Wilt disease"
+  ]
+}

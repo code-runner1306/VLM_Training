@@ -1,0 +1,54 @@
+{
+  "disease": "Yellow_Leaf_disease",
+  "typical_symptoms": [
+    "Yellowing of the midrib on the lower surface of mature leaves",
+    "Progressive chlorosis extending from the midrib into the adjacent leaf blade lamina",
+    "Premature drying and necrosis of leaf tissue starting from the tip and margins",
+    "Stunting of the overall cane growth under severe infections",
+    "Internal discoloration or pinkish-red internal stalk tissue in some advanced stages or specific cultivars"
+  ],
+  "visual_characteristics": [
+    "Distinct bright yellow to yellowish-orange discoloration strictly localized along the midrib",
+    "Sharp color contrast between the yellow midrib and the remaining green or progressively yellowing leaf blade",
+    "Accumulation of honeydew and subsequent black sooty mold on the leaves due to insect vector activity (aphids)",
+    "Bunching or curling of top leaves in severe cases"
+  ],
+  "affected_regions": [
+    "leaves",
+    "leaf blade",
+    "midrib",
+    "sheaths"
+  ],
+  "lesion_characteristics": [
+    "Generalized chlorosis rather than distinct discrete lesions or spots",
+    "Diffused longitudinal discoloration running parallel to leaf veins",
+    "No well-defined necrotic borders in early stages, transitioning to broad necrotic tip-dieback"
+  ],
+  "color_characteristics": [
+    "Bright yellow to golden-yellow along the midrib",
+    "Gradual transition from yellow midrib to green leaf blade, later turning straw-colored or brown upon tissue death",
+    "Reddish or pinkish tinges sometimes developing on leaf sheaths or midribs depending on the cultivar"
+  ],
+  "texture_characteristics": [
+    "Dry and papery as the chlorotic tissue progresses to necrosis",
+    "Sticky in areas infested by aphid vectors due to honeydew secretion",
+    "Smooth leaf surface lacking pustules, raised scabs, or velvety spore masses"
+  ],
+  "spatial_patterns": [
+    "Longitudinal parallel streaks along the midrib and vascular bundles",
+    "Symmetrical yellowing originating from the leaf collar and extending toward the tip along the midrib",
+    "Systemic distribution affecting lower to mid-canopy leaves predominantly"
+  ],
+  "distinguishing_features": [
+    "Yellowing is heavily concentrated on the lower surface of the midrib while upper leaf surfaces may initially remain greener",
+    "Absence of fungal fruiting bodies, necrotic ring spots, or eye-shaped lesions",
+    "Association with heavy populations of the sugarcane aphid vector (Melanaphis sacchari)"
+  ],
+  "commonly_confused_with": [
+    "Pokkah Boeng",
+    "Sugarcane Mosaic Virus",
+    "Ring spot",
+    "Nitrogen or potassium nutritional deficiencies",
+    "Root rot or drought-induced premature senescence"
+  ]
+}

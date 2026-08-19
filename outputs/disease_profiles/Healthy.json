@@ -1,54 +1,50 @@
 {
   "disease": "Healthy",
   "typical_symptoms": [
-    "Absence of chlorotic or necrotic leaf spots",
-    "Fully expanded, well-formed palmate leaves with intact margins",
-    "Vigorous stem and petiole growth without vascular discoloration or dark lesions",
-    "Normal boll development without rot or sunken lesions"
+    "No necrotic lesions, spots, streaks, or stripes present",
+    "Complete absence of chlorosis, mosaic patterns, or yellowing",
+    "No visible fungal growth, pustules, or signs of pest damage",
+    "Normal vibrant green coloration across the entire leaf surface and midrib"
   ],
   "visual_characteristics": [
-    "Uniform light green to dark green leaf lamina",
-    "Clean, distinct vein patterns without interveinal or vein-clearing chlorosis",
-    "Fine, natural pubescence (trichomes) visible on the underside and veins",
-    "Turgid and smooth leaf surface with no curling, cupping, or wilting"
+    "Vibrant, uniform green leaf blade with a distinct, clean white central midrib",
+    "Smooth and intact leaf margins without tearing, necrosis, or burning",
+    "Clean leaf surface free of powdery residue, soot, rust pustules, or lesions",
+    "Proper turgor pressure indicated by flat, upright, and firm leaf structure"
   ],
   "affected_regions": [
     "leaves",
-    "veins",
-    "bolls",
-    "stems",
-    "petioles"
+    "leaf blade",
+    "midrib",
+    "stalks",
+    "sheaths",
+    "canes",
+    "nodes"
   ],
   "lesion_characteristics": [
     "No lesions present",
-    "Intact cellular surface structure",
-    "Absence of chlorotic halos",
-    "Absence of necrotic centers",
-    "No sunken or raised spots"
+    "Completely free of necrotic centers, spots, or chlorotic halos"
   ],
   "color_characteristics": [
-    "Consistent green foliage ranging from bright green to deep forest green",
-    "Normal light green or pinkish-red hue on mature petioles and stems exposed to sunlight",
-    "No abnormal yellowing, bronzing, purpling, or dark brown/black discoloration"
+    "Rich, healthy green color representing normal chlorophyll content",
+    "Bright white midrib running continuously down the center of the leaf",
+    "Absence of yellowing, reddish-brown stripes, or mosaic discoloration"
   ],
   "texture_characteristics": [
-    "Smooth and turgid leaf lamina",
-    "Slightly velvety or puberulent leaf surface due to healthy trichomes",
-    "Firm leaf blade tissue without dry, brittle, or water-soaked regions"
+    "Smooth and firm leaf blade texture",
+    "No water-soaked areas, wrinkles, dry patches, or powdery spore masses"
   ],
   "spatial_patterns": [
-    "Uniform green tone across all leaf lobes",
-    "Absence of concentric rings, scattered spotting, or localized blotches",
-    "Clean interveinal regions with no chlorotic streaking"
+    "Uniform and even distribution of color across the entire leaf canopy",
+    "No clustered spots, linear streaks, or irregular necrotic patches"
   ],
   "distinguishing_features": [
-    "Complete absence of visible foliar symptoms, fungal mats, or bacterial oozing",
-    "Symmetrical palmate leaf morphology with clear, healthy venation",
-    "Consistent canopy color density and active turgor pressure"
+    "Complete absence of disease symptoms, blemishes, and discoloration",
+    "Uniform green blade contrasted cleanly by the prominent white midrib"
   ],
   "commonly_confused_with": [
-    "Early-stage nutrient deficiencies (e.g., mild nitrogen or potassium deficiency)",
-    "Minor mechanical wind or hail damage",
-    "Slight chemical spray drift or herbicidal injury"
+    "Early-stage yellow leaf virus (SCYLV)",
+    "Mild iron or nitrogen deficiency",
+    "Initial symptoms of ring spot or brown stripe"
   ]
 }

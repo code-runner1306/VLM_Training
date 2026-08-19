@@ -6,7 +6,7 @@ Given:
 {CANDIDATE_JSON}
 
 Evaluate the candidate annotation on the following 5 dimensions:
-1. Visual Observation Accuracy (0-30 points): Does the annotation describe genuine visual leaf/boll/stem features rather than generic placeholders?
+1. Visual Observation Accuracy (0-30 points): Does the annotation describe genuine visual leaf/stalk/cane/sheath features rather than generic placeholders?
 2. Diagnostic Evidence Quality (0-25 points): Does the diagnostic evidence logically connect observed features to ground-truth class {DISEASE_NAME}?
 3. Reasoning Quality (0-20 points): Is the reasoning coherent, detailed, and evidence-grounded?
 4. Hallucination Penalties (0-15 points): Are there zero non-visual/microscopic/chemical/treatment hallucinations? (15 = zero hallucination, 0 = severe hallucination).

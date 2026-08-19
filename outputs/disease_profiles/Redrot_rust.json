@@ -1,0 +1,46 @@
+{
+  "disease": "Redrot_rust",
+  "typical_symptoms": [
+    "Reddish-brown discoloration along the midrib and leaf blade",
+    "Elongated necrotic lesions and spots containing rust-colored pustules",
+    "Drying and premature death of heavily infected leaves"
+  ],
+  "visual_characteristics": [
+    "Elongated reddish streaks running parallel to veins",
+    "Clusters of brownish-orange to rust-colored spots on the leaf surface",
+    "Extensive necrotic tissue breakdown along one side of the leaf blade"
+  ],
+  "affected_regions": [
+    "leaves",
+    "leaf blade",
+    "midrib"
+  ],
+  "lesion_characteristics": [
+    "Elongated streaks and irregular oval spots",
+    "Undefined or diffuse margins merging into chlorotic areas",
+    "Necrotic centers with powdery pustules"
+  ],
+  "color_characteristics": [
+    "Bright reddish-orange to dark reddish-brown",
+    "Chlorotic yellowing surrounding necrotic zones",
+    "Dark greyish-brown to black necrotic patches in advanced stages"
+  ],
+  "texture_characteristics": [
+    "Powdery spore masses on the underside of lesions",
+    "Dry, papery, and brittle necrotic leaf tissue",
+    "Rough surface due to raised pustules"
+  ],
+  "spatial_patterns": [
+    "Linear streaks running parallel to the leaf veins",
+    "Scattered small pustules coalescing into larger blighted patches along the midrib"
+  ],
+  "distinguishing_features": [
+    "Striking red coloration along the midrib accompanied by powdery rust spore pustules"
+  ],
+  "commonly_confused_with": [
+    "Brown spot",
+    "Yellow spot",
+    "Ring spot",
+    "Pokkah Boeng"
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "disease": "Unknown",
+  "typical_symptoms": [
+    "small necrotic spots",
+    "shot-hole formation where dead centers drop out",
+    "dark discoloration along major veins",
+    "interveinal chlorosis and necrosis"
+  ],
+  "visual_characteristics": [
+    "numerous small circular to irregular brown spots across the leaf blade",
+    "perforations ('shot-holes') where necrotic tissue has fallen out of the leaf",
+    "darkening or blackening of major veins",
+    "scattered lighter-colored halos or centers within lesions"
+  ],
+  "affected_regions": [
+    "leaves",
+    "leaf blade",
+    "midrib"
+  ],
+  "lesion_characteristics": [
+    "small circular to irregular shapes",
+    "defined dark borders with necrotic or missing centers",
+    "size ranging from 1 to 5 mm in diameter"
+  ],
+  "color_characteristics": [
+    "light brown to dark brown spots",
+    "whitish or translucent necrotic centers",
+    "dark brown to nearly black discolored veins"
+  ],
+  "texture_characteristics": [
+    "dry necrotic tissue",
+    "perforated texture due to tissue drop-out"
+  ],
+  "spatial_patterns": [
+    "scattered spots across the leaf surface",
+    "localized clustering along veins"
+  ],
+  "distinguishing_features": [
+    "prominent shot-hole effect combined with dark vein necrosis",
+    "widespread small perforations across the entire lamina"
+  ],
+  "commonly_confused_with": [
+    "insect feeding damage",
+    "bacterial leaf spot",
+    "fungal leaf spot diseases"
+  ]
+}
