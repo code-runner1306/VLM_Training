@@ -1,61 +1,69 @@
 # ==============================================================================
-# Complete VLM Training & Synthetic Annotation Pipeline Requirements
-# Single-step installation for Linux ML GPU Servers (CUDA 12.1/12.4) & Local Dev:
-#     pip install -r requirements.txt
+# VLM Training & Synthetic Annotation Pipeline Requirements
+# Target server: Linux, Python 3.11.15, NVIDIA CUDA 12.2 driver/toolkit
+#
+# PyTorch does not publish a dedicated cu122 pip wheel set. The cu121 wheels are
+# the safest CUDA 12.x match for a CUDA 12.2 server/driver:
+#     python -m pip install --upgrade pip setuptools wheel
+#     python -m pip install -r requirements.txt
 # ==============================================================================
 
 --extra-index-url https://download.pytorch.org/whl/cu121
 
-# 1. PyTorch Core with CUDA Acceleration
-torch>=2.2.0
-torchvision>=0.17.0
-torchaudio>=2.2.0
-triton>=2.2.0; sys_platform == "linux"
+# 1. PyTorch CUDA stack
+torch==2.5.1+cu121
+torchvision==0.20.1+cu121
+torchaudio==2.5.1+cu121
+triton==3.1.0; sys_platform == "linux"
 
-# 2. VLM Fine-Tuning, QLoRA & Quantization
-transformers>=4.45.0
-peft>=0.7.0
-bitsandbytes>=0.43.0
-accelerate>=0.26.0
-datasets>=2.14.0
-deepspeed>=0.14.0; sys_platform == "linux"
+# 2. VLM fine-tuning, QLoRA, and distributed training
+transformers>=4.57.0,<5.0
+accelerate>=1.0.0,<2.0
+peft>=0.14.0,<1.0
+bitsandbytes>=0.45.0,<1.0
+datasets>=3.0.0,<5.0
+deepspeed>=0.15.0,<1.0; sys_platform == "linux"
+ninja>=1.11.0; sys_platform == "linux"
+packaging>=24.0
+safetensors>=0.4.5
 
-# 3. Multimodal Vision Processing & Tokenizers
-pillow>=10.0.0
-opencv-python-headless>=4.8.0
-einops>=0.7.0
-timm>=0.9.0
+# 3. Multimodal vision processing and tokenizers
+pillow>=10.4.0
+opencv-python-headless>=4.10.0
+einops>=0.8.0
+timm>=1.0.0
 qwen-vl-utils>=0.0.8
-sentencepiece>=0.1.99
-protobuf>=3.20.0
-av>=11.0.0
+sentencepiece>=0.2.0
+protobuf>=4.25.0
+av>=12.0.0
 decord>=0.6.0; sys_platform == "linux"
 
-# 4. Synthetic Annotation API Providers
-google-genai>=0.1.1
-openai>=1.12.0
-groq>=0.4.0
-ollama>=0.1.0
-httpx>=0.24.0
-pydantic>=2.0.0
-jsonschema>=4.18.0
-pyyaml>=6.0
-python-dotenv>=1.0.0
+# 4. Synthetic annotation API providers
+google-genai>=1.0.0
+openai>=1.50.0
+groq>=0.11.0
+ollama>=0.4.0
+httpx>=0.27.0
+pydantic>=2.8.0
+jsonschema>=4.23.0
+pyyaml>=6.0.2
+python-dotenv>=1.0.1
 
-# 5. Data Science, Plots & Hardware Telemetry
-scikit-learn>=1.3.0
-pandas>=2.0.0
-matplotlib>=3.7.0
-seaborn>=0.12.0
-tqdm>=4.65.0
-rich>=13.0.0
-psutil>=5.9.0
-pynvml>=11.5.0
-huggingface-hub>=0.20.0
+# 5. Data science, reports, and hardware telemetry
+numpy>=1.26.0
+scikit-learn>=1.5.0
+pandas>=2.2.0
+matplotlib>=3.9.0
+seaborn>=0.13.0
+tqdm>=4.66.0
+rich>=13.7.0
+psutil>=6.0.0
+pynvml>=12.0.0
+huggingface-hub>=0.26.0
 
-# 6. Quality Assurance & Test Suite
-pytest>=7.4.0
-pytest-asyncio>=0.21.0
+# 6. Quality assurance
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
 
-# 7. Local Project Package (Editable)
+# 7. Local project package
 -e .

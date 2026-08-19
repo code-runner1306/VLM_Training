@@ -1,7 +1,7 @@
 """
 Centralized Configuration File for VLM Annotation & LoRA Fine-Tuning Pipeline.
 
-Modify parameters directly in this file to set your default pipeline preferences.
+Modify parameters directly in this file F set your default pipeline preferences.
 Any CLI flags passed during command execution will dynamically override these defaults.
 """
 

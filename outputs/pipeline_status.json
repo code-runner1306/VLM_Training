@@ -1,0 +1,14 @@
+{
+  "session_id": "session_qwen25vl-3b-v1_20260814_141110",
+  "status": "RUNNING",
+  "current_stage": "Stage 1: VLM Synthetic Annotation Generation",
+  "experiment": "qwen25vl-3b-v1",
+  "annotation_provider": "huggingface",
+  "annotation_model": "Qwen/Qwen3-VL-8B-Instruct",
+  "train_config": "training/configs/qwen25vl_3b.yaml",
+  "dataset_dir": "sugarcane_dataset",
+  "start_time": "2026-08-14T08:41:10.440662+00:00",
+  "last_updated": "2026-08-14T08:41:10.442672+00:00",
+  "duration_sec": 0.0,
+  "error": null
+}
