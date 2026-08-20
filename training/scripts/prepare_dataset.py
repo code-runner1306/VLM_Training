@@ -10,7 +10,7 @@ import numpy as np
 # Ensure root directory is in sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from training.src.dataset import validate_annotation, compute_image_hash
+from training.src.dataset import validate_annotation, compute_image_hash, resolve_image_path
 
 try:
     import matplotlib
@@ -24,14 +24,21 @@ except ImportError:
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Prepare, validate, filter, and split VLM dataset.")
-    parser.add_argument("--annotations_file", type=str, default="outputs/annotations/annotations.jsonl", help="Input annotations JSONL file.")
+    parser.add_argument("--annotations_file", type=str, default=None, help="Input annotations JSONL file (default: artifacts/<dataset>/annotations.jsonl).")
     parser.add_argument("--dataset_root", type=str, default="Cotton_dataset", help="Root directory containing raw images.")
-    parser.add_argument("--output_dir", type=str, default="outputs/dataset", help="Output directory for manifests, stats, and plots.")
+    parser.add_argument("--output_dir", type=str, default=None, help="Output directory for manifests, stats, and plots (default: artifacts/<dataset>/).")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for splitting.")
     parser.add_argument("--train_ratio", type=float, default=0.70, help="Train set ratio.")
     parser.add_argument("--val_ratio", type=float, default=0.15, help="Validation set ratio.")
     parser.add_argument("--test_ratio", type=float, default=0.15, help="Test set ratio.")
     return parser.parse_args()
+
+
+def default_store_dir(dataset_root: str) -> str:
+    import re
+    base = os.path.basename(os.path.abspath(dataset_root))
+    normalized = re.sub(r"\s+", "_", base).lower()
+    return os.path.join("artifacts", normalized)
 
 
 def generate_plots(output_dir, stats, eligible_records, ineligible_records):
@@ -128,6 +135,10 @@ def generate_plots(output_dir, stats, eligible_records, ineligible_records):
 
 def main():
     args = parse_args()
+    if not args.annotations_file:
+        args.annotations_file = os.path.join(default_store_dir(args.dataset_root), "annotations.jsonl")
+    if not args.output_dir:
+        args.output_dir = default_store_dir(args.dataset_root)
     os.makedirs(args.output_dir, exist_ok=True)
 
     annotations_file = os.path.abspath(args.annotations_file)
@@ -303,7 +314,8 @@ def main():
     # Stratified grouped shuffle split by disease class and image hash to prevent leakage
     class_groups = defaultdict(lambda: defaultdict(list))
     for rec in eligible_records:
-        img_hash = compute_image_hash(rec["image_path"]) or rec["image_id"]
+        abs_path = rec.get("abs_image_path") or resolve_image_path(rec["image_path"], dataset_root)
+        img_hash = compute_image_hash(abs_path) or rec["image_id"]
         class_groups[rec["disease"]][img_hash].append(rec)
 
     train_set, val_set, test_set = [], [], []
@@ -345,11 +357,28 @@ def main():
     write_manifest(val_manifest_path, val_set)
     write_manifest(test_manifest_path, test_set)
 
+    # Annotations file provenance (SHA-256 + line count) for reproducibility
+    import hashlib
+    annotations_sha256 = None
+    annotations_lines = 0
+    try:
+        h = hashlib.sha256()
+        with open(annotations_file, "rb") as f:
+            for chunk in iter(lambda: f.read(65536), b""):
+                h.update(chunk)
+        annotations_sha256 = h.hexdigest()
+        annotations_lines = total_scanned
+    except Exception:
+        pass
+
     split_metadata = {
         "seed": args.seed,
         "train_ratio": args.train_ratio,
         "val_ratio": args.val_ratio,
         "test_ratio": args.test_ratio,
+        "annotations_source": annotations_file,
+        "annotations_line_count": annotations_lines,
+        "annotations_sha256": annotations_sha256,
         "total_eligible": eligible_count,
         "train_count": len(train_set),
         "validation_count": len(val_set),
@@ -370,9 +399,9 @@ def main():
     id_overlap_vt = val_ids.intersection(test_ids)
 
     # Hash checks
-    train_hashes = {compute_image_hash(r["image_path"]): r["image_id"] for r in train_set if os.path.exists(r["image_path"])}
-    val_hashes = {compute_image_hash(r["image_path"]): r["image_id"] for r in val_set if os.path.exists(r["image_path"])}
-    test_hashes = {compute_image_hash(r["image_path"]): r["image_id"] for r in test_set if os.path.exists(r["image_path"])}
+    train_hashes = {compute_image_hash(r.get("abs_image_path") or resolve_image_path(r["image_path"], dataset_root)): r["image_id"] for r in train_set if os.path.exists(r.get("abs_image_path") or resolve_image_path(r["image_path"], dataset_root))}
+    val_hashes = {compute_image_hash(r.get("abs_image_path") or resolve_image_path(r["image_path"], dataset_root)): r["image_id"] for r in val_set if os.path.exists(r.get("abs_image_path") or resolve_image_path(r["image_path"], dataset_root))}
+    test_hashes = {compute_image_hash(r.get("abs_image_path") or resolve_image_path(r["image_path"], dataset_root)): r["image_id"] for r in test_set if os.path.exists(r.get("abs_image_path") or resolve_image_path(r["image_path"], dataset_root))}
 
     hash_overlap_tv = set(train_hashes.keys()).intersection(set(val_hashes.keys())) - {None}
     hash_overlap_tt = set(train_hashes.keys()).intersection(set(test_hashes.keys())) - {None}

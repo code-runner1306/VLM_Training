@@ -2,6 +2,11 @@ import os
 import sys
 import json
 import argparse
+from pathlib import Path
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+
+from training.src.run_utils import resolve_latest_run
 
 try:
     from huggingface_hub import HfApi, create_repo
@@ -77,7 +82,12 @@ def main():
         print("[ERROR] HF_TOKEN environment variable is missing. Please set HF_TOKEN before running.")
         sys.exit(1)
 
-    adapter_dir = os.path.abspath(os.path.join("models", args.experiment))
+    run_dir = resolve_latest_run(experiment=args.experiment)
+    if run_dir is None:
+        print(f"[ERROR] No run directory found for experiment '{args.experiment}'.")
+        sys.exit(1)
+
+    adapter_dir = os.path.abspath(str(run_dir / "adapter"))
     if not os.path.exists(adapter_dir):
         print(f"[ERROR] Adapter directory not found: {adapter_dir}")
         sys.exit(1)
@@ -90,8 +100,8 @@ def main():
 
     # Auto-generate Model Card README.md
     base_model_id = "Qwen/Qwen2.5-VL-7B-Instruct"
-    meta_path = os.path.join("outputs", "experiments", args.experiment, "run_metadata.json")
-    if os.path.exists(meta_path):
+    meta_path = run_dir / "run_metadata.json"
+    if meta_path.exists():
         with open(meta_path, "r", encoding="utf-8") as f:
             meta = json.load(f)
             base_model_id = meta.get("model_id", base_model_id)

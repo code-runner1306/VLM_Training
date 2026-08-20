@@ -3,6 +3,7 @@ import sys
 import yaml
 import json
 import argparse
+from pathlib import Path
 
 # Ensure root directory is in sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
@@ -14,6 +15,14 @@ except ImportError:
 
 from training.src.trainer import train_vlm
 from training.src.model_factory import ModelFactory
+from training.src.run_utils import (
+    annotations_provenance,
+    config_copy_path,
+    create_run_dir,
+    read_run_metadata,
+    resolve_latest_run,
+    write_run_metadata,
+)
 from training.scripts.evaluate import run_evaluation
 
 
@@ -77,22 +86,42 @@ def main():
     model_key = config.get("model", {}).get("key", "qwen25vl_3b")
     adapter = ModelFactory.get_adapter(model_key, config)
 
-    train_manifest = os.path.abspath("outputs/dataset/train_manifest.jsonl")
-    val_manifest = os.path.abspath("outputs/dataset/validation_manifest.jsonl")
+    # Resolve run dir: new timestamped run, or latest run matching experiment+model for --resume
+    if args.resume:
+        resume_run = resolve_latest_run(experiment=args.experiment, model_key=model_key)
+        if resume_run is not None:
+            run_dir = resume_run
+            print(f"[RESUME] Continuing run directory: {run_dir}")
+        else:
+            print(f"[RESUME] No prior run found for experiment '{args.experiment}' / model '{model_key}'. Starting fresh.")
+            run_dir = create_run_dir(args.experiment)
+    else:
+        run_dir = create_run_dir(args.experiment)
+    print(f"[RUN] Run directory: {run_dir}")
+
+    train_manifest = os.path.abspath("artifacts/cotton_dataset/train_manifest.jsonl")
+    val_manifest = os.path.abspath("artifacts/cotton_dataset/validation_manifest.jsonl")
 
     if not os.path.exists(train_manifest):
         print("[ERROR] Training manifest missing! Please run `python training/scripts/prepare_dataset.py` first.")
         sys.exit(1)
 
-    # 2. Save run metadata under outputs/experiments/<experiment>/run_metadata.json
-    exp_output_dir = os.path.abspath(os.path.join("outputs", "experiments", args.experiment))
-    os.makedirs(exp_output_dir, exist_ok=True)
+    # 2. Save run metadata with full provenance inside the run directory
+    config_copy_path(run_dir, config_path)
+    split_meta_path = Path("artifacts/cotton_dataset/split_metadata.json")
+    split_metadata = {}
+    if split_meta_path.exists():
+        try:
+            split_metadata = json.loads(split_meta_path.read_text(encoding="utf-8"))
+        except Exception:
+            pass
 
     run_metadata = {
         "experiment": args.experiment,
         "model_key": model_key,
         "model_id": adapter.model_id,
         "config_file": config_path,
+        "config_copy": str(run_dir / "config.yaml"),
         "adaptation_strategy": config.get("adaptation", {}).get("strategy"),
         "lora_rank": config.get("adaptation", {}).get("r"),
         "lora_alpha": config.get("adaptation", {}).get("lora_alpha"),
@@ -101,10 +130,12 @@ def main():
         "quantization": config.get("quantization", {}).get("quant_type"),
         "hardware_profile": config.get("hardware_profile"),
         "early_stopping_config": config.get("early_stopping", {}),
+        "prompt_version": config.get("dataset", {}).get("prompt_version"),
+        "teacher": config.get("dataset", {}).get("teacher_model"),
+        "split_metadata": split_metadata,
     }
-
-    with open(os.path.join(exp_output_dir, "run_metadata.json"), "w", encoding="utf-8") as f:
-        json.dump(run_metadata, f, indent=2)
+    run_metadata.update(annotations_provenance(Path("artifacts/cotton_dataset/annotations.jsonl")))
+    write_run_metadata(run_dir, run_metadata)
 
     # 3. Run fine-tuning
     train_summary = train_vlm(
@@ -115,6 +146,7 @@ def main():
         val_manifest=val_manifest,
         resume=args.resume,
         smoke_test=args.smoke_test,
+        run_dir=run_dir,
     )
 
     # Update run metadata with timing, vram, parameter counts, and early stopping results
@@ -124,13 +156,12 @@ def main():
         "param_counts": train_summary["param_counts"],
         "early_stopping_result": train_summary.get("early_stopping"),
     })
-    with open(os.path.join(exp_output_dir, "run_metadata.json"), "w", encoding="utf-8") as f:
-        json.dump(run_metadata, f, indent=2)
+    write_run_metadata(run_dir, run_metadata)
 
     # 4. Automatically run post-training test evaluation
     if not args.no_eval:
         print(f"\n--- Running Automated Post-Training Test Evaluation for {args.experiment} ---")
-        run_evaluation(experiment_name=args.experiment, config=config, adapter=adapter)
+        run_evaluation(experiment_name=args.experiment, config=config, adapter=adapter, run_dir=run_dir)
 
 
 if __name__ == "__main__":

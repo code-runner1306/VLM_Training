@@ -1,0 +1,1 @@
+{"image_id": "63f7d19746b68466", "image_path": "Red_cotton_bug/IMG_20260121_164241671_HDR.jpg", "provider": "hf-qwen3-vl-8b", "model": "Qwen/Qwen3-VL-8B-Instruct", "error": "HuggingFace VLM generation error: image file is truncated (78 bytes not processed)", "timestamp": "2026-08-15T21:11:14.120599+00:00"}

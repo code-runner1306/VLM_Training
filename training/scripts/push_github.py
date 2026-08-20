@@ -12,6 +12,10 @@ FORBIDDEN_PATHS = {
     "models/", "checkpoints/", ".env", ".env.example", ".env.local"
 }
 
+FORBIDDEN_DIR_PREFIXES = {
+    "outputs/annotations/", "outputs/run_"
+}
+
 MAX_FILE_SIZE_MB = 25.0
 
 
@@ -46,6 +50,12 @@ def scan_for_forbidden_files() -> List[str]:
             norm_rel = rel_path.replace("\\", "/")
             if norm_rel.startswith(forbidden) or norm_rel.startswith(f"./{forbidden}"):
                 violations.append(f"Forbidden directory/secret path '{forbidden}': {rel_path}")
+
+        # Check forbidden scratch/run dirs (annotation scratch + heavy training run dirs)
+        norm_rel = rel_path.replace("\\", "/")
+        for forbidden in FORBIDDEN_DIR_PREFIXES:
+            if norm_rel.startswith(forbidden) or norm_rel.startswith(f"./{forbidden}"):
+                violations.append(f"Forbidden scratch/run path '{forbidden}': {rel_path}")
 
         # Check file size if file exists
         if os.path.isfile(rel_path):
@@ -86,8 +96,8 @@ def main():
         return
 
     # Stage files
-    print("\nStaging code, configs, logs, and outputs/...")
-    run_cmd(["git", "add", "main.py", "config.py", "vlm_annotation/", "scripts/", "training/", "outputs/", "logs/", "tests/", "README.md", ".gitignore", "requirements.txt", "pyproject.toml", "openspec/", "run_sequential_datasets.sh", "run_sequential_datasets.ps1"])
+    print("\nStaging code, configs, and artifacts...")
+    run_cmd(["git", "add", "main.py", "config.py", "vlm_annotation/", "scripts/", "training/", "artifacts/", "tests/", "README.md", ".gitignore", "requirements.txt", "pyproject.toml", "openspec/", "run_sequential_datasets.sh", "run_sequential_datasets.ps1"])
 
     code, git_status_out = run_cmd(["git", "status", "--short"])
     print("Files ready to be committed:")

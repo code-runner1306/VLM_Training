@@ -12,12 +12,12 @@ To run synthetic annotation and 4-bit QLoRA training **back-to-back automaticall
 python main.py --annotation-provider huggingface --annotation-model Qwen/Qwen2.5-VL-7B-Instruct --train-config training/configs/qwen25vl_3b.yaml --experiment qwen25vl-3b-v1
 ```
 
-`main.py` performs all 5 pipeline stages sequentially:
+`main.py` performs all pipeline stages sequentially:
 1. **Pre-flight health check** & local Hugging Face model verification.
-2. **Synthetic Annotation Generation** across all dataset images.
-3. **Dataset Validation & 80/10/10 Split Preparation** (perceptual hash grouping, 0% data leakage).
-4. **VLM QLoRA Fine-Tuning** & checkpoint saving under `models/`.
-5. **Held-Out Test Set Evaluation & Cross-Model Comparison** reporting under `outputs/`.
+2. **Coverage-gated Synthetic Annotation Generation** — annotations live in a canonical per-dataset store at `artifacts/<dataset>/annotations.jsonl`. If `coverage.json` reports `complete` (zero missing, zero failed), annotation is skipped entirely.
+3. **Dataset Validation & deterministic 70/15/15 Split Preparation** (stratified per disease, grouped by image hash, seed 42, 0% leakage) under `artifacts/<dataset>/`.
+4. **VLM QLoRA Fine-Tuning** & checkpoint saving under `outputs/run_<id>/`.
+5. **Held-Out Test Set Evaluation & Cross-Model Comparison** reporting under `outputs/run_<id>/` and `outputs/comparison/`.
 
 ---
 
@@ -41,7 +41,7 @@ When running long-running jobs on remote college/cloud servers, `main.py` guaran
 1. **Session Logging**: Every execution generates a unique session ID (e.g. `session_qwen25vl-3b-v1_20260811_213500`) and streams logs to both console and `logs/pipeline_<session_id>.log`.
 2. **Real-Time Status Tracking**: `outputs/pipeline_status.json` records live progress (`RUNNING`, `SUCCESS`, or `FAILED`), current stage, and execution timestamps.
 3. **Automatic GitHub Notification on Error**:
-   - If an unhandled exception or OOM occurs at any stage, `main.py` catches it, writes the full traceback to `outputs/experiments/<experiment>/error_log.txt`, and automatically runs `push_github.py` with:
+   - If an unhandled exception or OOM occurs at any stage, `main.py` catches it, writes the full traceback to `logs/pipeline_error_<experiment>.txt`, and automatically runs `push_github.py` with:
      `FAILED: Error occurred in <session_id> session - <stage_name>: <error_summary>`
    - This pushes the error log to GitHub immediately, notifying you of the exact failure even if you are away from the remote terminal.
 4. **Automatic GitHub Notification on Success**:
@@ -139,6 +139,9 @@ pip install -r requirements.txt
 Create a `.env` file in the project root directory if using cloud annotation providers:
 ```env
 GEMINI_API_KEY=AIzaSy-your-key-here
+# Optional: comma-separated Gemini keys → parallel annotation (overrides GEMINI_API_KEY).
+# One subprocess per key, each annotating a 500-image slice, then merged in order.
+# GEMINI_API_KEYS=AIzaSy-key1,AIzaSy-key2,AIzaSy-key3
 GROQ_API_KEY=gsk_your-key-here
 NVIDIA_API_KEY=nvapi-your-key-here
 OPENROUTER_API_KEY=sk-or-v1-your-key-here
@@ -192,54 +195,47 @@ python scripts/check_ollama.py --host http://127.0.0.1:11434 --model qwen3-vl:8b
 
 ---
 
-### 3. Model Speed & Throughput Profiling
+### 3. Canonical Annotation Store & Coverage Gate
 
-#### Profile Annotation Latency & Throughput (Estimate 20,000-Image Runtime)
-```bash
-python scripts/generate_annotations.py --provider huggingface --model Qwen/Qwen2.5-VL-7B-Instruct --benchmark-speed --num-samples 50
+Annotations are written **once** into a canonical per-dataset store and reused by
+every training run. Everything traceable lives in `artifacts/<dataset>/` and is
+pushed to git:
+
 ```
+artifacts/cotton_dataset/
+├── annotations.jsonl     # canonical annotated records (first-wins by image_id)
+├── failed.jsonl          # per-image failures that still need retrying
+├── coverage.json         # annotated / missing / failed / complete (complete = missing==0 AND failed==0)
+├── batches.jsonl         # one row per merge batch
+├── statistics.json       # cumulative aggregate
+├── split_metadata.json   # 70/15/15 recipe + annotations SHA-256 + line count
+├── eligible_manifest.jsonl / train_manifest.jsonl / validation_manifest.jsonl / test_manifest.jsonl
+├── dataset_eligibility.* / dataset_statistics.* / leakage_report.md / plots/
+```
+
+Per-run worker scratch under `outputs/annotations/` is git-ignored; only the
+store is canonical. Inspect coverage at any time:
+
+```bash
+python -c "import json; print(json.load(open('artifacts/cotton_dataset/coverage.json')))"
+```
+
+`main.py` gates Stage 1 on this store: if `coverage.complete` is true it skips
+annotation entirely; otherwise it annotates the gap (resuming via the store's
+existing records and retrying failed IDs) and promotes the results back.
 
 ---
 
-### 4. 200-Image Parallel Model Benchmarking
+### 4. Standalone Synthetic Annotation Generation
 
-#### Benchmark All Enabled Models in `models.yaml`
+#### Run Full Annotation with Google Gemini Flash-Lite (parallel auto-mode)
 ```bash
-python scripts/benchmark_models.py --dataset-dir Cotton_dataset --resume
+python scripts/generate_annotations.py --provider gemini --model gemini-flash-lite-latest --dataset-dir Cotton_dataset --resume
 ```
-
-#### Benchmark Qwen3-VL-8B (8B, Priority ⭐⭐⭐⭐⭐)
-```bash
-python scripts/benchmark_models.py --provider huggingface --model Qwen/Qwen3-VL-8B-Instruct --dataset-dir Cotton_dataset --sample-count 200 --resume
-```
-
-#### Benchmark InternVL3.5-8B / InternVL2.5-8B (8B, Priority ⭐⭐⭐⭐⭐)
-```bash
-python scripts/benchmark_models.py --provider huggingface --model OpenGVLab/InternVL2_5-8B --dataset-dir Cotton_dataset --sample-count 200 --resume
-```
-
-#### Benchmark InternVL3.5-14B / InternVL2.5-14B (14B, Priority ⭐⭐⭐⭐)
-```bash
-python scripts/benchmark_models.py --provider huggingface --model OpenGVLab/InternVL2_5-14B --dataset-dir Cotton_dataset --sample-count 200 --resume
-```
-
-#### Benchmark Qwen2.5-VL-7B (7B)
-```bash
-python scripts/benchmark_models.py --provider huggingface --model Qwen/Qwen2.5-VL-7B-Instruct --dataset-dir Cotton_dataset --sample-count 200 --resume
-```
-
----
-
-### 5. Standalone Synthetic Annotation Generation
 
 #### Run Full Annotation with Local Hugging Face VLM
 ```bash
 python scripts/generate_annotations.py --provider huggingface --model Qwen/Qwen2.5-VL-7B-Instruct --dataset-dir Cotton_dataset --resume
-```
-
-#### Run Full Annotation with Google Gemini Flash-Lite
-```bash
-python scripts/generate_annotations.py --provider gemini --model gemini-flash-lite-latest --dataset-dir Cotton_dataset --resume
 ```
 
 #### Process First $N$ Sample Images
@@ -252,18 +248,34 @@ python scripts/generate_annotations.py --provider huggingface --model Qwen/Qwen2
 python scripts/generate_annotations.py --provider huggingface --model Qwen/Qwen2.5-VL-7B-Instruct --start-index 0 --end-index 5000 --resume
 ```
 
-#### Retry Only Failed Annotations (`failed.jsonl`)
+#### Parallel Gemini Annotation (Multiple API Keys)
+Set ≥2 comma-separated keys in `GEMINI_API_KEYS` (see `.env` above) and run normally —
+parallel mode is auto-detected and spawns one worker subprocess per key, each
+annotating a contiguous slice sized to cover the full dataset (override with
+`--chunk-size`), streaming all worker logs live to the console. Results are
+promoted into `artifacts/<dataset>/annotations.jsonl` (idempotent, first-wins),
+failures appended to `failed.jsonl`, and `batches.jsonl` / `statistics.json` /
+`coverage.json` updated. Per-worker dirs are pruned after a successful merge.
 ```bash
-python scripts/generate_annotations.py --provider huggingface --model Qwen/Qwen2.5-VL-7B-Instruct --retry-failed
+python scripts/generate_annotations.py --provider gemini --model gemini-flash-lite-latest --dataset-dir Cotton_dataset --start-index 5001 --resume
+```
+- Worker count is capped at `min(keys, cpu_count, 4)` (override: `--max-workers` or `MAX_GEMINI_WORKERS` env).
+- Reuse a specific scratch run dir with `--run-dir <path>`.
+
+#### Force a New Prompt Version (Re-annotate)
+Ignore existing store records and replace them with a new prompt version:
+```bash
+python scripts/generate_annotations.py --provider gemini --model gemini-flash-lite-latest --dataset-dir Cotton_dataset --force-regenerate --prompt-version 2.0
 ```
 
 ---
 
-### 6. Dataset Preparation & Leakage-Free Splitting
+### 5. Dataset Preparation & Leakage-Free Splitting
 
-#### Validate Annotations and Build 80/10/10 Split Manifests
+#### Validate Annotations and Build 70/15/15 Split Manifests
+Defaults point at the canonical store; outputs land in `artifacts/<dataset>/`:
 ```bash
-python training/scripts/prepare_dataset.py --annotations_file outputs/annotations/huggingface/Qwen_Qwen2.5-VL-7B-Instruct/run_20260811_120000/annotations.jsonl --dataset_root Cotton_dataset
+python training/scripts/prepare_dataset.py --dataset_root Cotton_dataset
 ```
 
 ---
@@ -273,8 +285,19 @@ python training/scripts/prepare_dataset.py --annotations_file outputs/annotation
 Training uses a real gradient-based `transformers.Trainer` loop driven by the
 YAML config: learning rate, weight decay, warmup ratio, scheduler, batch size,
 gradient accumulation, max grad norm, bf16/fp16, gradient checkpointing, and
-logging/eval/save steps. Checkpoints are written by the Trainer under
-`checkpoints/<experiment>/` and support resume + early stopping.
+logging/eval/save steps. Each run is fully self-contained under
+`outputs/run_<YYYYmmdd_HHMMSS>/`:
+
+```
+outputs/run_20260820_100000/
+├── run_metadata.json   # provenance: experiment tag, model, config, annotations SHA-256, split metadata
+├── config.yaml         # copied config
+├── checkpoints/        # Trainer checkpoints (git-ignored)
+├── adapter/            # exported PEFT adapter (git-ignored)
+├── plots/              # training curves
+├── metrics/ reports/   # post-training evaluation (classification + explanation)
+└── logs/
+```
 
 #### Train Qwen2.5-VL-3B
 ```bash
@@ -287,6 +310,7 @@ python training/scripts/train.py --config training/configs/qwen25vl_7b.yaml --ex
 ```
 
 #### Resume Interrupted Training from the Latest Checkpoint
+Resuming reuses the latest `outputs/run_*` matching the experiment tag + model key:
 ```bash
 python training/scripts/train.py --config training/configs/qwen25vl_3b.yaml --experiment qwen25vl-3b-v1 --resume
 ```
@@ -302,25 +326,27 @@ python training/scripts/train.py --config training/configs/qwen25vl_3b.yaml --ex
 python training/scripts/train.py --config training/configs/qwen25vl_3b.yaml --experiment qwen25vl-3b-v1 --patience 3 --early-stopping-monitor val_loss
 ```
 
-The best (or last) PEFT adapter is exported to `models/<experiment>/` after
+The best (or last) PEFT adapter is exported to `outputs/run_<id>/adapter/` after
 training, with a `run_metadata.json` summary (parameter counts, VRAM, timing,
-early-stopping result).
+early-stopping result, annotations provenance).
 
 ---
 
 ### 8. Post-Training Evaluation & Comparison (Real Inference)
 
 Evaluation loads the base model from the local cache, attaches the trained
-`models/<experiment>/` adapter via `PeftModel.from_pretrained`, and generates a
+`outputs/run_<id>/adapter/` via `PeftModel.from_pretrained`, and generates a
 real response per held-out test image using the training user prompt. Predictions
 therefore come from actual model inference (never ground-truth passthrough).
 
 #### Evaluate Fine-Tuned Model on Held-Out Test Set
+Resolves the latest run for the experiment automatically:
 ```bash
-python training/scripts/evaluate.py --config training/configs/qwen25vl_3b.yaml --experiment qwen25vl-3b-v1
+python training/scripts/evaluate.py --experiment qwen25vl-3b-v1
 ```
 
 #### Run Cross-Model Comparison & Generate Final Recommendation Report
+Scans all `outputs/run_*` directories:
 ```bash
 python training/scripts/compare_models.py
 ```
@@ -331,18 +357,21 @@ python training/scripts/compare_models.py
 
 #### Merge LoRA Adapter Weights with Base VLM Weights
 ```bash
-python training/scripts/merge_lora.py --base-model Qwen/Qwen2.5-VL-3B-Instruct --adapter-dir models/qwen25vl-3b-v1 --output-dir models/merged/qwen25vl-3b-v1
+python training/scripts/merge_lora.py --experiment qwen25vl-3b-v1
 ```
 
 #### Publish Fine-Tuned Adapter to Hugging Face Hub
 ```bash
-python training/scripts/push_huggingface.py --adapter-dir models/qwen25vl-3b-v1 --repo-id my-org/qwen25vl-cotton-adapter
+python training/scripts/push_huggingface.py --experiment qwen25vl-3b-v1 --repo my-org/qwen25vl-cotton-adapter
 ```
 
 #### Pre-Commit GitHub Safety Scanner (Prevents Accidental Weight Uploads)
 ```bash
 python training/scripts/push_github.py --dry-run --message "Add VLM training pipeline updates"
 ```
+The scanner pushes `artifacts/` (canonical annotation store) and per-run metadata,
+eval, and plots, while refusing weight binaries and git-ignored scratch/checkpoint
+directories (`outputs/annotations/`, `outputs/run_*/checkpoints/`, `outputs/run_*/adapter/`, `models/`).
 
 ---
 

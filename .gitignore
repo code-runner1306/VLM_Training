@@ -20,6 +20,14 @@ logs/
 # Raw dataset
 Cotton_dataset/
 
+# Annotation scratch runs (per-run worker dirs + run folders). NOT canonical; git-ignored.
+outputs/annotations/
+
+# Per-run training outputs (weights/checkpoints heavy). Only run_metadata/config tracked.
+outputs/run_*/
+outputs/run_*/checkpoints/
+outputs/run_*/adapter/
+
 # LOCAL MODEL WEIGHTS & CHECKPOINTS (NEVER COMMIT TO GIT)
 /models/
 /checkpoints/

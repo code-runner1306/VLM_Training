@@ -1,0 +1,14 @@
+{
+  "session_id": "session_smoke-test-run_20260820_145723",
+  "status": "SUCCESS",
+  "current_stage": "Completed",
+  "experiment": "smoke-test-run",
+  "annotation_provider": "huggingface",
+  "annotation_model": "Qwen/Qwen3-VL-8B-Instruct",
+  "train_config": "training/configs/qwen25vl_3b.yaml",
+  "dataset_dir": "Cotton_dataset",
+  "start_time": "2026-08-20T09:27:23.854403+00:00",
+  "last_updated": "2026-08-20T09:27:39.280911+00:00",
+  "duration_sec": 15.42,
+  "error": null
+}

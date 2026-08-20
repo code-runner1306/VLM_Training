@@ -10,7 +10,7 @@ from training.src.comparison import run_cross_model_comparison
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run cross-model evaluation comparison and composite ranking.")
-    parser.add_argument("--experiments_root", type=str, default="outputs/experiments", help="Path to experiments output directory.")
+    parser.add_argument("--experiments_root", type=str, default="outputs", help="Root directory scanned for run_* directories.")
     parser.add_argument("--output_dir", type=str, default="outputs/comparison", help="Output directory for comparison results.")
     return parser.parse_args()
 

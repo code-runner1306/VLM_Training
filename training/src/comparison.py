@@ -44,7 +44,7 @@ def load_experiment_results(exp_dir: str) -> Optional[Dict[str, Any]]:
         with open(meta_file, "r", encoding="utf-8") as f:
             meta_data = json.load(f)
 
-    exp_name = os.path.basename(exp_dir)
+    exp_name = meta_data.get("experiment") or os.path.basename(exp_dir)
     overall_clf = clf_data.get("overall", {})
 
     return {
@@ -189,7 +189,7 @@ def generate_final_recommendation_report(ranked_experiments: List[Dict[str, Any]
         f.write(f"We recommend selecting `{top_model['experiment']}` for production deployment and downstream integration into the cotton disease visual assistance system.\n")
 
 
-def run_cross_model_comparison(experiments_root: str = "outputs/experiments", output_dir: str = "outputs/comparison"):
+def run_cross_model_comparison(experiments_root: str = "outputs", output_dir: str = "outputs/comparison"):
     os.makedirs(output_dir, exist_ok=True)
     if not os.path.exists(experiments_root):
         print(f"[WARNING] No experiments directory found at {experiments_root}.")
@@ -198,7 +198,7 @@ def run_cross_model_comparison(experiments_root: str = "outputs/experiments", ou
     exp_dirs = [
         os.path.join(experiments_root, d)
         for d in os.listdir(experiments_root)
-        if os.path.isdir(os.path.join(experiments_root, d))
+        if os.path.isdir(os.path.join(experiments_root, d)) and d.startswith("run_")
     ]
 
     experiments = []

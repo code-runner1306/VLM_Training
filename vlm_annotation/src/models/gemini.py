@@ -27,9 +27,9 @@ with warnings.catch_warnings():
 class GeminiVisionModel(VisionModel):
     """Provider implementation for Google Gemini Vision Models."""
 
-    def __init__(self, provider_name: str, model_id: str, config: Dict[str, Any]):
+    def __init__(self, provider_name: str, model_id: str, config: Dict[str, Any], api_key: Optional[str] = None):
         super().__init__(provider_name, model_id, config)
-        api_key = os.getenv("GEMINI_API_KEY")
+        api_key = api_key or os.getenv("GEMINI_API_KEY")
         if not api_key:
             raise ValueError("GEMINI_API_KEY environment variable is not set.")
 

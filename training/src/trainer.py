@@ -3,6 +3,7 @@ import sys
 import time
 import glob
 import torch
+from pathlib import Path
 from typing import Dict, Any, Optional, Tuple
 
 try:
@@ -153,6 +154,7 @@ def train_vlm(
     val_manifest: str,
     resume: bool = False,
     smoke_test: bool = False,
+    run_dir: Optional[Path] = None,
 ) -> Dict[str, Any]:
     """
     Execute real VLM QLoRA fine-tuning via transformers.Trainer with native
@@ -177,7 +179,11 @@ def train_vlm(
             "transformers >= 4.41 is required for Trainer-based training. Please run `pip install transformers`."
         )
 
-    checkpoint_dir = os.path.abspath(config.get("checkpoint", {}).get("output_dir", f"checkpoints/{experiment_name}"))
+    checkpoint_dir = os.path.abspath(
+        config.get("checkpoint", {}).get("output_dir",
+                                         str((run_dir or Path("outputs") / experiment_name) / "checkpoints"))
+    )
+    os.makedirs(checkpoint_dir, exist_ok=True)
 
     # 1. Early stopping configuration (YAML + config.py overrides already merged by callers)
     es_cfg = config.get("early_stopping", {})
@@ -346,8 +352,8 @@ def train_vlm(
 
     total_training_time = time.time() - start_time
 
-    # 8. Export the best/last PEFT adapter to models/<experiment>/
-    final_model_dir = os.path.abspath(os.path.join("models", experiment_name))
+    # 8. Export the best/last PEFT adapter to run_dir/adapter/
+    final_model_dir = os.path.abspath(str((run_dir or Path("outputs") / experiment_name) / "adapter"))
     os.makedirs(final_model_dir, exist_ok=True)
     trainer.save_model(final_model_dir)
     if hasattr(processor, "save_pretrained"):
@@ -376,7 +382,7 @@ def train_vlm(
             if "learning_rate" in log:
                 history["learning_rate"].append(float(log["learning_rate"]))
 
-    exp_plots_dir = os.path.abspath(os.path.join("outputs", "experiments", experiment_name, "plots"))
+    exp_plots_dir = os.path.abspath(str((run_dir or Path("outputs") / experiment_name) / "plots"))
     plot_training_curves(
         history=history,
         output_dir=exp_plots_dir,

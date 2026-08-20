@@ -4,7 +4,8 @@ import json
 import yaml
 import argparse
 import torch
-from typing import Dict, Any, List
+from pathlib import Path
+from typing import Dict, Any, List, Optional
 
 # Ensure root directory is in sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
@@ -14,6 +15,7 @@ from training.src.trainer import get_quantization_config
 from training.src.model_factory import ModelFactory
 from training.src.evaluator import execute_test_evaluation
 from training.src.dataset import DEFAULT_USER_PROMPT
+from training.src.run_utils import resolve_latest_run
 
 try:
     from peft import PeftModel
@@ -31,7 +33,7 @@ except ImportError:
 def parse_args():
     parser = argparse.ArgumentParser(description="Evaluate fine-tuned VLM on held-out test set using real model inference.")
     parser.add_argument("--experiment", type=str, required=True, help="Experiment identifier name.")
-    parser.add_argument("--test_manifest", type=str, default="outputs/dataset/test_manifest.jsonl", help="Path to test set manifest.")
+    parser.add_argument("--test_manifest", type=str, default="artifacts/cotton_dataset/test_manifest.jsonl", help="Path to test set manifest.")
     parser.add_argument("--output_dir", type=str, default=None, help="Output directory for metrics and plots.")
     return parser.parse_args()
 
@@ -40,7 +42,7 @@ def load_fine_tuned_model(adapter: Any, config: Dict[str, Any], adapter_dir: str
     """Load the base model from the local cache + the trained PEFT adapter."""
     if not os.path.isdir(adapter_dir):
         raise FileNotFoundError(
-            f"Adapter directory not found: {adapter_dir}. Run training first (adapter is exported to models/<experiment>/)."
+            f"Adapter directory not found: {adapter_dir}. Run training first (adapter is exported to <run_dir>/adapter/)."
         )
     if PeftModel is None:
         raise ImportError("peft is required for adapter loading. Please run `pip install peft`.")
@@ -142,19 +144,23 @@ def generate_predictions(
     return predictions
 
 
-def run_evaluation(experiment_name: str, config: Dict[str, Any], adapter: Any):
-    test_manifest_path = os.path.abspath("outputs/dataset/test_manifest.jsonl")
+def run_evaluation(experiment_name: str, config: Dict[str, Any], adapter: Any, run_dir: Optional[Path] = None):
+    test_manifest_path = os.path.abspath("artifacts/cotton_dataset/test_manifest.jsonl")
     if not os.path.exists(test_manifest_path):
         print(f"[ERROR] Test manifest not found: {test_manifest_path}")
         return
 
-    exp_output_dir = os.path.abspath(os.path.join("outputs", "experiments", experiment_name))
+    run_dir = run_dir or resolve_latest_run(experiment=experiment_name)
+    if run_dir is None:
+        print(f"[ERROR] No run directory found for experiment '{experiment_name}'. Cannot evaluate.")
+        return
+    exp_output_dir = os.path.abspath(str(run_dir))
     os.makedirs(exp_output_dir, exist_ok=True)
 
     print(f"\n--- Evaluating Experiment: {experiment_name} ---")
     print(f"Reading test manifest: {test_manifest_path}")
 
-    adapter_dir = os.path.abspath(os.path.join("models", experiment_name))
+    adapter_dir = os.path.abspath(str(run_dir / "adapter"))
     model, processor = load_fine_tuned_model(adapter, config, adapter_dir)
 
     predictions = generate_predictions(
@@ -178,12 +184,15 @@ def run_evaluation(experiment_name: str, config: Dict[str, Any], adapter: Any):
 
 def main():
     args = parse_args()
-    exp_dir = os.path.abspath(os.path.join("outputs", "experiments", args.experiment))
-    run_meta_path = os.path.join(exp_dir, "run_metadata.json")
+    run_dir = resolve_latest_run(experiment=args.experiment)
+    if run_dir is None:
+        print(f"[ERROR] No run directory found for experiment '{args.experiment}'.")
+        sys.exit(1)
+    run_meta_path = run_dir / "run_metadata.json"
 
     config: Dict[str, Any] = {}
     model_key = "qwen25vl_3b"
-    if os.path.exists(run_meta_path):
+    if run_meta_path.exists():
         with open(run_meta_path, "r", encoding="utf-8") as f:
             meta = json.load(f)
             model_key = meta.get("model_key", "qwen25vl_3b")
@@ -193,7 +202,7 @@ def main():
                     config = yaml.safe_load(f) or {}
 
     adapter = ModelFactory.get_adapter(model_key, config)
-    run_evaluation(experiment_name=args.experiment, config=config, adapter=adapter)
+    run_evaluation(experiment_name=args.experiment, config=config, adapter=adapter, run_dir=run_dir)
 
 
 if __name__ == "__main__":

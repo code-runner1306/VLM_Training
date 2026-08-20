@@ -3,6 +3,11 @@ import sys
 import json
 import torch
 import argparse
+from pathlib import Path
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+
+from training.src.run_utils import resolve_latest_run
 
 try:
     from transformers import AutoModelForCausalLM, AutoProcessor
@@ -17,20 +22,25 @@ def main():
     parser.add_argument("--output_dir", type=str, default=None, help="Output directory for merged model.")
     args = parser.parse_args()
 
-    adapter_dir = os.path.abspath(os.path.join("models", args.experiment))
+    run_dir = resolve_latest_run(experiment=args.experiment)
+    if run_dir is None:
+        print(f"[ERROR] No run directory found for experiment '{args.experiment}'.")
+        sys.exit(1)
+
+    adapter_dir = os.path.abspath(str(run_dir / "adapter"))
     if not os.path.exists(adapter_dir):
         print(f"[ERROR] Adapter directory not found: {adapter_dir}")
         sys.exit(1)
 
-    out_dir = args.output_dir or os.path.abspath(os.path.join("models", f"{args.experiment}-merged"))
+    out_dir = args.output_dir or os.path.abspath(str(run_dir / "merged"))
 
-    print(f"--- Merging LoRA Adapter for {args.experiment} ---")
+    print(f"--- Merging LoRA Adapter for {args.experiment} (run: {run_dir.name}) ---")
     print(f"Adapter Dir: {adapter_dir}")
     print(f"Output Dir:  {out_dir}")
 
     base_model_id = "Qwen/Qwen2.5-VL-7B-Instruct"
-    meta_path = os.path.join("outputs", "experiments", args.experiment, "run_metadata.json")
-    if os.path.exists(meta_path):
+    meta_path = run_dir / "run_metadata.json"
+    if meta_path.exists():
         with open(meta_path, "r", encoding="utf-8") as f:
             meta = json.load(f)
             base_model_id = meta.get("model_id", base_model_id)

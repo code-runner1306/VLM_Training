@@ -120,7 +120,7 @@ def test_train_vlm_builds_training_arguments_from_config(monkeypatch, tmp_path):
     assert "checkpoints" in args["output_dir"] and "exp-v1" in args["output_dir"]
 
     trainer = _last_trainer()
-    assert trainer.saved_to.endswith(os_sep_join("models", "exp-v1"))
+    assert trainer.saved_to.endswith(os_sep_join("outputs", "exp-v1", "adapter"))
 
     assert result["experiment"] == "exp-v1"
     assert "param_counts" in result

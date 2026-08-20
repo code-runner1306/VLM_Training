@@ -222,7 +222,7 @@ def execute_test_evaluation(
         training_time_s=training_time_s,
         peak_vram_gb=peak_vram_gb,
         param_counts=param_counts or {},
-        adapter_dir=os.path.join("models", experiment_name),
+        adapter_dir=os.path.join(exp_output_dir, "adapter"),
     )
 
     print(f"[EVALUATION] Post-training evaluation suite complete for {experiment_name}.")
